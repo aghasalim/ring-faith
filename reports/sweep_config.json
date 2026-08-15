@@ -1,0 +1,19 @@
+{
+  "topologies": [
+    "clique",
+    "star",
+    "cycle",
+    "bipartite"
+  ],
+  "camouflage": [
+    0.0,
+    0.5,
+    1.0,
+    2.0
+  ],
+  "seeds": 5,
+  "n_explain": 25,
+  "n_detection_rows": 240,
+  "n_faithfulness_rows": 11967,
+  "runtime_seconds": 1696.5
+}
