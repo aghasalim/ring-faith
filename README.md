@@ -116,8 +116,9 @@ class in both groups and paired by experimental cell: GNNExplainer's lift falls
 from 1.664 to 1.158 on GCN and 1.905 to 1.655 on GraphSAGE, and that drop is
 resolved (Wilcoxon p = 3.2e-05 and 2.0e-05). The gradient and integrated
 gradients show the *opposite* raw direction — gradient lift 2.204 → 2.611 on
-GCN — but paired by cell neither difference resolves (p = 0.13 and 0.37), so I
-am not claiming they explain missed nodes better, only that they do not visibly
+GCN — but paired by cell neither difference resolves (p = 0.13 for the gradient
+and 0.37 for integrated gradients on GCN, 0.32 for both on GraphSAGE), so I am
+not claiming they explain missed nodes better, only that they do not visibly
 degrade. A plausible mechanism for the split: GNNExplainer optimises a mask to
 preserve a class the model is not actually predicting on these nodes, while an
 attribution method just reads a derivative and does not care. That is a guess;
