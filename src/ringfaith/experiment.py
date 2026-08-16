@@ -11,23 +11,35 @@ from ringfaith.metrics import edge_faithfulness, node_metrics, ring_recall
 from ringfaith.models import MODELS, fraud_scores, train
 from ringfaith.split import assert_not_degenerate, stratified_split
 
+# The explanation budget. `None` is the oracle budget -- the true number of motif edges in
+# the candidate set -- which is what the original sweep used and is generous to every
+# explainer, since an investigator does not know that number. The fixed budgets are what a
+# review queue actually looks like: show me the top few edges. The analytic random null is
+# `n_relevant / n_candidates` regardless of k, so lift stays well defined at every budget.
+K_MODES: dict[str, int | None] = {"oracle": None, "k1": 1, "k3": 3, "k5": 5, "k10": 10, "k20": 20}
+
 
 def run_config(
     topology: str,
     camouflage: float,
     seed: int,
     models: tuple[str, ...] = ("gcn", "sage", "mlp"),
-    explainers: tuple[str, ...] = ("gnnexplainer", "grad", "random"),
+    explainers: tuple[str, ...] = explain.EXPLAINERS,
     n_explain: int = 25,
     hops: int = 2,
     gen_kwargs: dict | None = None,
 ) -> tuple[list[dict], list[dict]]:
     """Run one (topology, camouflage, seed) cell.
 
-    Returns (detection_rows, faithfulness_rows). Faithfulness is measured only
-    for graph models -- the MLP has no edges to explain -- and only on fraud
-    nodes the model actually got right, since explaining a missed node asks a
-    different question.
+    Returns (detection_rows, faithfulness_rows). Faithfulness is measured only for graph
+    models -- the MLP has no edges to explain -- on fraud nodes the model detected
+    (`score > 0.5`) and, separately, on fraud nodes it missed. The missed group is the
+    operationally interesting one and was not measured at all in the first version of this
+    repo; rows carry `detected` so the two can be compared or either read alone.
+
+    Both groups are explained with respect to the fraud class, not the predicted class, so
+    they answer the same question. Every explainer's scores are evaluated at every budget in
+    `K_MODES` from a single scoring pass, so the budget sweep costs nothing extra.
     """
     torch.manual_seed(seed)
     g = generate(topology=topology, camouflage=camouflage, seed=seed, **(gen_kwargs or {}))
@@ -61,20 +73,38 @@ def run_config(
         if name == "mlp":
             continue
 
-        # Explain correctly-detected fraud nodes, sampled reproducibly.
-        rng = np.random.default_rng(1000 + seed)
-        fraud = np.flatnonzero((g.y == 1) & (scores > 0.5))
-        if len(fraud) == 0:
-            continue
-        targets = rng.permutation(fraud)[:n_explain]
-
-        for target in targets:
-            cand = explain.candidate_edges(g.edges, adj, g.n_nodes, int(target), hops=hops)
-            if ring_mask[cand].sum() == 0:
+        # Two groups, sampled reproducibly and from independent streams so that adding the
+        # missed group cannot perturb which detected nodes get drawn.
+        groups = {
+            1: (np.flatnonzero((g.y == 1) & (scores > 0.5)), 1000 + seed),
+            0: (np.flatnonzero((g.y == 1) & (scores <= 0.5)), 2000 + seed),
+        }
+        for detected, (pool, draw_seed) in groups.items():
+            if len(pool) == 0:
                 continue
-            for ex in explainers:
-                s = explain.REGISTRY[ex](model, x, e, int(target), cand, seed=seed)
-                r = edge_faithfulness(cand, s, ring_mask, seed=seed * 100003 + int(target))
-                if r is not None:
-                    faith_rows.append({**base, "model": name, "explainer": ex, "node": int(target), **r})
+            targets = np.random.default_rng(draw_seed).permutation(pool)[:n_explain]
+            for target in targets:
+                cand = explain.candidate_edges(g.edges, adj, g.n_nodes, int(target), hops=hops)
+                if ring_mask[cand].sum() == 0:
+                    continue
+                for ex in explainers:
+                    s = explain.REGISTRY[ex](
+                        model, x, e, int(target), cand, seed=seed, target_class=explain.FRAUD
+                    )
+                    for k_mode, k in K_MODES.items():
+                        r = edge_faithfulness(
+                            cand, s, ring_mask, k=k, seed=seed * 100003 + int(target)
+                        )
+                        if r is not None:
+                            faith_rows.append(
+                                {
+                                    **base,
+                                    "model": name,
+                                    "explainer": ex,
+                                    "node": int(target),
+                                    "detected": detected,
+                                    "k_mode": k_mode,
+                                    **r,
+                                }
+                            )
     return det_rows, faith_rows

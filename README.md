@@ -17,8 +17,9 @@ Three quantities that usually get conflated:
 number has to be read against.
 
 Everything below is measured. 80 configurations (4 ring topologies × 4
-camouflage levels × 5 seeds), 240 trained models, 11,967 per-node faithfulness
-measurements, 28 minutes on a laptop CPU. The numbers in every table are
+camouflage levels × 5 seeds), 240 trained models, four explainers, six
+explanation budgets, 5,464 explained nodes and 131,136 faithfulness
+measurements, 44 minutes on 4 laptop CPU cores. The numbers in every table are
 regenerated from `reports/*.csv` by `experiments/make_tables.py`; none were
 typed by hand.
 
@@ -53,12 +54,25 @@ Clique at camouflage 2.0: **AUC 0.881, ring recall 0.100**. Bipartite at 2.0:
 ring recall below 0.20. A model can look acceptable on the headline metric
 while returning nothing an investigator can open a case on.
 
-**F5 — A plain gradient beats GNNExplainer here.**
-Pooled lift over the null: **gradient 2.423, GNNExplainer 1.784, random 1.001**.
-Paired on the same node and model, the gradient wins 42.6% of the time, ties
-24.0%, and loses 33.4%, mean margin +0.046 (Wilcoxon p = 1.8e-27). The gradient
-costs one backward pass; GNNExplainer costs 150 optimisation steps. I expected
-the learned mask to win and it did not.
+**F5 — Cheap gradient attribution beats GNNExplainer, but the plain gradient's
+win depends on a tight explanation budget.**
+At the oracle budget, pooled lift over the null: **integrated gradients 2.604,
+plain gradient 2.423, GNNExplainer 1.784, random 1.001**. Paired on the same
+node and model, the plain gradient wins 42.6% of the time, ties 24.0%, loses
+33.4%, mean margin +0.046 (Wilcoxon p = 1.8e-27). The gradient costs one
+backward pass, integrated gradients 50, GNNExplainer 150 optimisation steps. I
+expected the learned mask to win and it did not.
+
+**The plain gradient's half of that does not survive a realistic budget.** The
+oracle budget is the true motif-edge count, which averages 16 edges out of 126
+candidates. Held instead at a fixed budget an investigator could actually set,
+the gradient's margin over GNNExplainer shrinks monotonically and is gone by ten
+edges: +0.072 at k=1, +0.059 at k=3, +0.029 at k=5, then **−0.002 at k=10
+(p = 0.72, no effect) and −0.004 at k=20 (p = 0.02, i.e. slightly the wrong
+way)**. Integrated gradients keeps its margin at every budget (+0.118 at k=1 down
+to +0.009 at k=20, p ≤ 2.2e-10 throughout). So the durable claim is that a
+gradient-based attribution beats the learned mask; the specific claim that a
+*single-point* gradient does is only true for the top few edges. Table 10.
 
 **F6 — The better detector carries the less faithful explainer.**
 GCN reaches AUC 0.839 and ring recall 0.348; GraphSAGE reaches 0.698 and 0.142.
@@ -89,7 +103,39 @@ Reproduce with `make demo` (`reports/degenerate_split.json`).
 **F10 — Instrument: the random control is calibrated.**
 Over 3,989 measurements the random explainer scores mean precision **0.2293**
 against an analytic expectation of **0.2297**, lift **1.001**. The null does what
-it is supposed to do, which is what makes F1, F2 and F5 readable.
+it is supposed to do, which is what makes F1, F2 and F5 readable. It also holds
+at every budget added later — random lift 0.922 / 0.976 / 0.979 / 1.005 / 1.008
+/ 1.001 at k = 1, 3, 5, 10, 20 and oracle — and on missed nodes as well as
+detected ones (0.992 and 0.989), so the new tables are readable on the same
+terms.
+
+**F11 — Explanations of missed rings are worse only for GNNExplainer.**
+Faithfulness used to be defined only where the model was already right. Measured
+on the 1,475 fraud nodes the models missed (score ≤ 0.5), explaining the fraud
+class in both groups and paired by experimental cell: GNNExplainer's lift falls
+from 1.664 to 1.158 on GCN and 1.905 to 1.655 on GraphSAGE, and that drop is
+resolved (Wilcoxon p = 3.2e-05 and 2.0e-05). The gradient and integrated
+gradients show the *opposite* raw direction — gradient lift 2.204 → 2.611 on
+GCN — but paired by cell neither difference resolves (p = 0.13 and 0.37), so I
+am not claiming they explain missed nodes better, only that they do not visibly
+degrade. A plausible mechanism for the split: GNNExplainer optimises a mask to
+preserve a class the model is not actually predicting on these nodes, while an
+attribution method just reads a derivative and does not care. That is a guess;
+the measurement is the resolved GNNExplainer drop. Table 7.
+
+**F12 — Instrument: on GraphSAGE, integrated gradients is the plain gradient.**
+The two agree on **100.0%** of GraphSAGE nodes and on only 36.9% of GCN nodes.
+This is not a bug and not a coincidence. SAGE's mean aggregation divides by the
+row sum of the weighted adjacency, so scaling every edge weight by the same
+factor cancels — the forward pass is constant along the entire straight-line
+path integrated gradients walks. A degree-zero homogeneous function has
+`∇f(αw) = ∇f(w)/α`, so the path average is a positive multiple of the gradient at
+unit weights and the two produce an identical ranking. GCN's `A + I`
+normalisation breaks the homogeneity, and there they differ and IG wins. Fifty
+backward passes buy exactly nothing on a mean-aggregating model, which is worth
+knowing before paying for them.
+`tests/test_metrics.py::test_mean_aggregation_makes_integrated_gradients_equal_to_the_plain_gradient`
+pins both halves.
 
 ### What I did not find
 
@@ -111,7 +157,9 @@ the wrong version of that paragraph was already written down.
 
 ## Results
 
-`lift over null` is the column that matters: precision divided by the analytic random baseline for that cell. `random null` is that baseline. `nodes explained` is the support — faithfulness is measured only on fraud nodes the model actually scored above 0.5, since explaining a missed node asks a different question.
+`lift over null` is the column that matters: precision divided by the analytic random baseline for that cell. `random null` is that baseline. `nodes explained` is the support.
+
+Tables 1–6 are the oracle budget on fraud nodes the model detected (score > 0.5), which is what the original version of this repo measured; they are unchanged except for the added `ig` rows. Tables 7–10 are the measurements that close the three gaps: missed nodes, a third explainer, and budgets that are not oracles.
 
 ### Table 1 — GCN: detection vs explanation faithfulness
 
@@ -140,10 +188,15 @@ the wrong version of that paragraph was already written down.
 |:--------|:-------------|-----------------:|----------------:|--------------------------:|-------------------------:|------------:|-----------:|
 | gcn     | gnnexplainer |            0.302 |           0.22  |                     0.228 |                    0.184 |       1.664 |      1.712 |
 | gcn     | grad         |            0.331 |           0.207 |                     0.228 |                    0.184 |       2.204 |      2.511 |
+| gcn     | ig           |            0.366 |           0.2   |                     0.228 |                    0.184 |       2.566 |      2.803 |
 | gcn     | random       |            0.226 |           0.211 |                     0.228 |                    0.184 |       1.001 |      0.951 |
 | sage    | gnnexplainer |            0.326 |           0.225 |                     0.232 |                    0.188 |       1.905 |      2.091 |
 | sage    | grad         |            0.389 |           0.204 |                     0.232 |                    0.188 |       2.642 |      2.706 |
+| sage    | ig           |            0.389 |           0.204 |                     0.232 |                    0.188 |       2.642 |      2.706 |
 | sage    | random       |            0.233 |           0.217 |                     0.232 |                    0.188 |       1.001 |      0.909 |
+
+`sage grad` and `sage ig` are identical to every decimal because on a
+mean-aggregating model they are the same estimator — see F12.
 
 ### Table 3 — structure-blind baseline
 
@@ -180,12 +233,68 @@ the wrong version of that paragraph was already written down.
 | grad wins / ties / loses vs gnnexplainer (%)                           | 42.6 / 24.0 / 33.4 | -         |
 | gcn gnnexplainer: beats own random null on % of nodes (n=2000)         | 54.6               | 2.15e-66  |
 | gcn grad: beats own random null on % of nodes (n=2000)                 | 60.9               | 1.90e-101 |
+| gcn ig: beats own random null on % of nodes (n=2000)                   | 69.0               | 6.68e-147 |
 | sage gnnexplainer: beats own random null on % of nodes (n=1989)        | 60.6               | 8.27e-84  |
 | sage grad: beats own random null on % of nodes (n=1989)                | 71.1               | 4.51e-162 |
+| sage ig: beats own random null on % of nodes (n=1989)                  | 71.1               | 4.51e-162 |
 | bipartite: spearman(camouflage, node AUC) / spearman(camouflage, lift) | -1.0 / +1.0        | -         |
 | clique: spearman(camouflage, node AUC) / spearman(camouflage, lift)    | -1.0 / +0.4        | -         |
 | cycle: spearman(camouflage, node AUC) / spearman(camouflage, lift)     | -1.0 / +0.2        | -         |
 | star: spearman(camouflage, node AUC) / spearman(camouflage, lift)      | -1.0 / +0.8        | -         |
+
+### Table 7 — faithfulness on detected vs missed fraud nodes (oracle budget)
+
+| model   | explainer    |   detected lift |   detected precision |   detected n |   missed lift |   missed precision |   missed n |   lift difference |   paired cells |   wilcoxon p |
+|:--------|:-------------|----------------:|---------------------:|-------------:|--------------:|-------------------:|-----------:|------------------:|---------------:|-------------:|
+| gcn     | gnnexplainer |           1.664 |                0.302 |         2000 |         1.158 |              0.194 |        466 |             0.505 |             67 |     3.18e-05 |
+| gcn     | grad         |           2.204 |                0.331 |         2000 |         2.611 |              0.279 |        466 |            -0.407 |             67 |     0.129    |
+| gcn     | ig           |           2.566 |                0.366 |         2000 |         3.328 |              0.327 |        466 |            -0.762 |             67 |     0.365    |
+| gcn     | random       |           1.001 |                0.226 |         2000 |         0.992 |              0.17  |        466 |             0.009 |             67 |     0.508    |
+| sage    | gnnexplainer |           1.905 |                0.326 |         1989 |         1.655 |              0.25  |       1009 |             0.25  |             79 |     2.03e-05 |
+| sage    | grad         |           2.642 |                0.389 |         1989 |         3.071 |              0.362 |       1009 |            -0.429 |             79 |     0.324    |
+| sage    | ig           |           2.642 |                0.389 |         1989 |         3.071 |              0.362 |       1009 |            -0.429 |             79 |     0.324    |
+| sage    | random       |           1.001 |                0.233 |         1989 |         0.989 |              0.185 |       1009 |             0.012 |             79 |     0.503    |
+
+### Table 8 — mean lift over the null by explanation budget (detected nodes)
+
+| explainer    |    k1 |    k3 |    k5 |   k10 |   k20 |   oracle |
+|:-------------|------:|------:|------:|------:|------:|---------:|
+| gnnexplainer | 1.92  | 2.058 | 2.182 | 2.156 | 1.831 |    1.784 |
+| grad         | 3.002 | 2.896 | 2.718 | 2.313 | 1.865 |    2.423 |
+| ig           | 3.242 | 3.258 | 3.075 | 2.548 | 1.975 |    2.604 |
+| random       | 0.922 | 0.976 | 0.979 | 1.005 | 1.008 |    1.001 |
+
+### Table 9 — mean lift over the null by explanation budget (missed nodes)
+
+| explainer    |    k1 |    k3 |    k5 |   k10 |   k20 |   oracle |
+|:-------------|------:|------:|------:|------:|------:|---------:|
+| gnnexplainer | 1.109 | 1.307 | 1.459 | 1.768 | 1.77  |    1.498 |
+| grad         | 3.527 | 3.361 | 3.263 | 2.77  | 2.169 |    2.926 |
+| ig           | 4.182 | 3.854 | 3.595 | 2.986 | 2.253 |    3.152 |
+| random       | 0.895 | 0.951 | 0.992 | 1.025 | 1.022 |    0.99  |
+
+### Table 10 — does the gradient still beat GNNExplainer at a realistic budget?
+
+| budget   | comparison           |   challenger lift |   gnnexpl lift |   mean precision margin | wins / ties / losses (%)   |   wilcoxon p |    n |
+|:---------|:---------------------|------------------:|---------------:|------------------------:|:---------------------------|-------------:|-----:|
+| k1       | grad vs gnnexplainer |             3.002 |          1.92  |                  0.0719 | 26.4 / 54.3 / 19.3         |     1.79e-11 | 3989 |
+| k3       | grad vs gnnexplainer |             2.896 |          2.058 |                  0.0592 | 40.5 / 31.7 / 27.9         |     1.77e-09 | 3989 |
+| k5       | grad vs gnnexplainer |             2.718 |          2.182 |                  0.029  | 40.6 / 27.2 / 32.2         |     2.44e-10 | 3989 |
+| k10      | grad vs gnnexplainer |             2.313 |          2.156 |                 -0.0019 | 34.5 / 29.3 / 36.2         |     0.718    | 3989 |
+| k20      | grad vs gnnexplainer |             1.865 |          1.831 |                 -0.0044 | 31.4 / 37.8 / 30.8         |     0.0207   | 3989 |
+| oracle   | grad vs gnnexplainer |             2.423 |          1.784 |                  0.0462 | 42.6 / 24.0 / 33.4         |     1.81e-27 | 3989 |
+| k1       | ig vs gnnexplainer   |             3.242 |          1.92  |                  0.1176 | 28.2 / 55.3 / 16.5         |     1.16e-28 | 3989 |
+| k3       | ig vs gnnexplainer   |             3.258 |          2.058 |                  0.1113 | 44.6 / 32.8 / 22.5         |     4.46e-47 | 3989 |
+| k5       | ig vs gnnexplainer   |             3.075 |          2.182 |                  0.0772 | 46.2 / 27.7 / 26.1         |     5.43e-66 | 3989 |
+| k10      | ig vs gnnexplainer   |             2.548 |          2.156 |                  0.0277 | 39.9 / 29.9 / 30.2         |     3.78e-25 | 3989 |
+| k20      | ig vs gnnexplainer   |             1.975 |          1.831 |                  0.0086 | 35.0 / 39.2 / 25.7         |     2.23e-10 | 3989 |
+| oracle   | ig vs gnnexplainer   |             2.604 |          1.784 |                  0.0637 | 47.1 / 24.4 / 28.6         |     7.46e-60 | 3989 |
+
+Table 7 is paired by experimental cell, not by node: nodes inside one cell share
+a graph and a trained model, so pooling them would overstate n by two orders of
+magnitude. Tables 8 and 9 read down the `random` row first — the analytic null
+has no `k` term, so a uniform ranking has to sit at ~1.0 in every column, and it
+does. In Table 10 a positive margin means the challenger beats GNNExplainer.
 
 ## What this is, and what it is not
 
@@ -234,15 +343,28 @@ mean aggregation (arXiv:1706.02216), and a structure-blind MLP baseline. All in
 plain PyTorch on a dense adjacency; no torch-geometric. Two layers, hidden 32,
 class-balanced cross-entropy, early stopping on validation loss.
 
-**Explainers** (`src/ringfaith/explain.py`). All three score the *same*
-candidate set — the edges of the target's 2-hop subgraph.
+**Explainers** (`src/ringfaith/explain.py`). All four score the *same* candidate
+set — the edges of the target's 2-hop subgraph.
 
 - `gnnexplainer` — a learned sigmoid edge mask (arXiv:1903.03894), optimised to
-  preserve the target's predicted class under size and entropy penalties.
+  preserve the target's class under size and entropy penalties. 150 steps.
 - `grad` — `|∂logit/∂edge_weight|` at unit weights. This is gradient×input on
   the edge weights, but since every input is exactly 1, the product degenerates
-  to the plain absolute gradient. Worth stating rather than dressing up.
+  to the plain absolute gradient. Worth stating rather than dressing up. 1 step.
+- `ig` — integrated gradients (arXiv:1703.01365) along the edge-weight path from
+  the empty graph to the real one, midpoint rule, 50 steps. Since the input
+  difference is exactly 1 on every edge, the attribution reduces to the
+  path-averaged gradient — so `grad` is the same quantity read at a single point
+  on that path, which is what makes the pair informative. Absolute value is taken
+  for the same reason `grad` takes it, to rank by influence rather than by
+  direction.
 - `random` — uniform scores. The mandatory null.
+
+Every explainer takes a `target_class`. The usual convention is to explain
+whatever the model predicted, and the sweep overrides it to the *fraud* class for
+every target. On a detected node the two are the same thing, so no previously
+reported number moves; on a missed node they are not, and without the override
+the detected and missed groups would be answering different questions.
 
 The explainers do **not** extract a subgraph and run the model on it. They run
 the model on the full graph and only let the mask vary over candidate edges,
@@ -258,7 +380,10 @@ nodes, K = the true fraud count — the ≥80% convention is TravelFraudBench's)
 and edge faithfulness, the overlap between an explainer's top-k candidate edges
 and the planted motif edges. The budget `k` defaults to the number of motif
 edges in the candidate set, which makes precision = recall = F1, so one number
-per node.
+per node — but that default is an oracle, so every explainer's scores are also
+evaluated at fixed budgets of 1, 3, 5, 10 and 20 edges from the same scoring
+pass. The analytic null `n_relevant / n_candidates` carries no `k` term, so lift
+is comparable across budgets; `tests/test_metrics.py` pins that at each one.
 
 ## Limitations
 
@@ -269,14 +394,27 @@ per node.
   direction and time; none of that is representable here.
 - **One feature mechanism.** A single mean shift on one dimension. A different
   feature-signal design could move the detection numbers substantially.
-- **Two explainers plus the null.** No PGExplainer, no SubgraphX, no attention.
-  A negative result for GNNExplainer is not a negative result for all explainers.
+- **Three explainers plus the null.** GNNExplainer, the plain gradient and
+  integrated gradients. Still no PGExplainer, no SubgraphX, no attention — and
+  two of the three are gradient attributions that coincide exactly on
+  GraphSAGE (F12), so the effective diversity is smaller than the count. A
+  negative result for GNNExplainer is not a negative result for all explainers.
 - **Homophily by construction.** Ring members share a feature shift *and* are
   densely connected, which is the regime GNNs are best in. Heterophilous fraud
   (a mule that looks exactly like its legitimate neighbours) is not covered.
-- **`k` is oracle-sized.** Defaulting the budget to the true number of motif
-  edges in the neighbourhood is generous to the explainers; an investigator does
-  not know that number in advance.
+- **The oracle budget flatters the plain gradient specifically.** `k` defaulting
+  to the true number of motif edges is information no investigator has, and F5
+  now reports what happens without it. What is still untested is the middle
+  ground: a budget picked by a heuristic (a fraction of the candidate set, a
+  score threshold) rather than either an oracle or a flat constant.
+- **Missed nodes are explained with respect to the fraud class.** That is the
+  operationally sensible choice and it makes the detected and missed groups
+  comparable, but it is a choice. The other convention — explain whatever the
+  model predicted, which on a missed node is "legitimate" — is supported by the
+  code (`target_class=None`) and was not run.
+- **Faithfulness on missed nodes is measured per node, not per ring.** A node the
+  model missed may still sit in a ring that was mostly recovered. Ring-level
+  conditioning would be a different and probably sharper cut.
 - **Small graphs.** Dense adjacency is `O(N²)`; everything here is under ~1.5k
   nodes. Nothing about scaling is tested.
 
@@ -284,8 +422,8 @@ per node.
 
 ```bash
 make venv     # .venv + editable install
-make test     # 40 tests
-make sweep    # the full topology x camouflage sweep
+make test     # 52 tests
+make sweep    # the full sweep: 4 explainers x 6 budgets, ~45 min on 4 cores
 make demo     # the degenerate-split finding
 make report   # rebuild the tables in this README from reports/*.csv
 ```
@@ -300,13 +438,14 @@ this README was typed by hand.
 src/ringfaith/
   generate.py   graph generator + exact ground truth
   models.py     GCN / GraphSAGE / MLP on a dense adjacency
-  explain.py    GNNExplainer, gradient, random null
+  explain.py    GNNExplainer, gradient, integrated gradients, random null
   metrics.py    AUC/AP, ring recall, edge faithfulness
   split.py      stratified split + degeneracy check
   experiment.py one experimental cell
 experiments/    run_sweep.py, degenerate_split_demo.py, make_tables.py
-tests/          40 pytest tests on the generator and the metrics
+tests/          52 pytest tests on the generator, the metrics and the explainers
 reports/        result CSVs and JSON written by the runs above
+                (faithfulness_raw.csv.gz is the 131k-row per-node table)
 ```
 
 ## References
@@ -319,6 +458,8 @@ Verified to exist at the time of writing; anything I could not resolve was left 
   Detection.* ACM ICAIF 2025. doi:10.1145/3768292.3770410
 - Ying, Bourgeois, You, Zitnik, Leskovec. *GNNExplainer: Generating
   Explanations for Graph Neural Networks.* arXiv:1903.03894, 2019.
+- Sundararajan, Taly, Yan. *Axiomatic Attribution for Deep Networks.*
+  arXiv:1703.01365, 2017.
 - Kipf, Welling. *Semi-Supervised Classification with Graph Convolutional
   Networks.* arXiv:1609.02907, 2016.
 - Hamilton, Ying, Leskovec. *Inductive Representation Learning on Large Graphs.*
