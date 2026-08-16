@@ -50,9 +50,10 @@ absolute usefulness at the same time.
 
 **F4 — Ring recovery collapses long before node AUC does.**
 Clique at camouflage 2.0: **AUC 0.881, ring recall 0.100**. Bipartite at 2.0:
-**AUC 0.729, ring recall 0.000**. Four of sixteen cells sit above 0.70 AUC with
-ring recall below 0.20. A model can look acceptable on the headline metric
-while returning nothing an investigator can open a case on.
+**AUC 0.729, ring recall 0.000**. Four of the sixteen GCN cells (4 topologies ×
+4 camouflage levels) sit above 0.70 AUC with ring recall below 0.20; across all
+three model families it is 8 of 48. A model can look acceptable on the headline
+metric while returning nothing an investigator can open a case on.
 
 **F5 — Cheap gradient attribution beats GNNExplainer, but the plain gradient's
 win depends on a tight explanation budget.**
