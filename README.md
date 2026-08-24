@@ -1,29 +1,45 @@
 # RingFaith
 
-In GNN fraud detection the headline number is node-level AUC. An investigator
-does not act on a score, though — they act on the *explained structure*, the
-handful of edges the explainer says mattered. This repo measures how far apart
-those two things drift.
+**In GNN fraud detection, does the explanation point at the ring the model supposedly found?**
 
-Three quantities that usually get conflated:
+[![tests](https://img.shields.io/badge/tests-52%20passing-brightgreen.svg)](tests/)
+[![licence](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
-1. **node detection** — AUC / average precision
-2. **ring recovery** — did the model surface the planted collusion ring at all
-3. **explanation faithfulness** — do the explainer's top edges recover the
-   ring's *own* edges
+---
 
-(1) and (2) are prior art (see [positioning](#what-this-is-and-what-it-is-not)).
-(3) is what I add, together with the random-edge null that any faithfulness
-number has to be read against.
+## Abstract
 
-Everything below is measured. 80 configurations (4 ring topologies × 4
-camouflage levels × 5 seeds), 240 trained models, four explainers, six
-explanation budgets, 5,464 explained nodes and 131,136 faithfulness
-measurements, 44 minutes on 4 laptop CPU cores. The numbers in every table are
-regenerated from `reports/*.csv` by `experiments/make_tables.py`; none were
-typed by hand.
+Fraud-detection GNNs are reported by node-level AUC. An investigator does not act
+on a score, though — they act on the explained structure, the handful of edges an
+explainer says mattered. This work measures how far those two things drift apart,
+separating three quantities that are usually conflated: node detection (AUC and
+average precision), ring recovery (was the planted collusion ring surfaced at
+all), and explanation faithfulness (do the explainer's top edges recover the
+ring's own edges). The first two are prior art; the third is the contribution,
+together with the random-edge null that any faithfulness number has to be read
+against.
 
-## Findings
+Across 80 configurations — 4 ring topologies x 4 camouflage levels x 5 seeds, 240
+trained models, 4 explainers, 6 budgets, 131,136 faithfulness measurements — the
+headline metric and the useful one come apart sharply. At camouflage 2.0 a GCN
+still scores 0.71 AUC, which reads as a working model, while ring recovery has
+fallen from 78% to 2%. Explanation faithfulness never gets far off the floor:
+Integrated Gradients, the best of the four, puts 41% of its top edges inside the
+ring against a 23% random-edge expectation. Lift over that null *rises* with
+camouflage, from 1.3x to 3.3x, because the null thins faster than the explainer
+degrades — which is why lift has to be read alongside precision rather than
+instead of it.
+
+**Contributions.** (i) A planted-ring benchmark where the structure to be
+explained is known by construction. (ii) An analytic random-edge null, with a
+random explainer that sits on lift 1.0 as the check on it. (iii) Measurement at
+realistic explanation budgets rather than only at an oracle budget that assumes
+the ring size is known. (iv) Evidence that node AUC is close to uninformative
+about whether the model found the collusion.
+
+---
+
+## 1. Findings
 
 ![node AUC against ring recovery under camouflage](reports/figures/detection-vs-recovery.png)
 
@@ -165,7 +181,7 @@ decimals on every topology. I deleted the claim and kept the random
 tie-breaking as a guard, with a test pinning it. Recording the near-miss because
 the wrong version of that paragraph was already written down.
 
-## Results
+## 2. Results
 
 ![explainer precision against the random-edge null](reports/figures/faithfulness.png)
 
@@ -316,7 +332,18 @@ magnitude. Tables 8 and 9 read down the `random` row first — the analytic null
 has no `k` term, so a uniform ranking has to sit at ~1.0 in every column, and it
 does. In Table 10 a positive margin means the challenger beats GNNExplainer.
 
-## What this is, and what it is not
+### 2.1 Does the budget change the answer?
+
+![faithfulness against explanation budget](reports/figures/budget-sensitivity.png)
+
+`oracle` hands the explainer the true number of ring edges. That is the budget the
+first version of this repo measured at, and it is not available at inference time —
+knowing how big the ring is was the question. At the fixed budgets an investigator
+actually gets, raw precision climbs as the budget tightens while lift stays much
+flatter, because the null tightens with it. The random explainer sits on 1.0
+throughout, which is the check on the null rather than a result.
+
+## 3. What this is, and what it is not
 
 Ring-level ground truth for fraud graphs is not my idea. **TravelFraudBench**
 (arXiv:2604.21093, Sajja, April 2026) already builds a configurable benchmark
@@ -333,7 +360,20 @@ faithfulness layer measured against the planted motif's own edges, and against
 a random-edge null. The generator here exists to make that measurable, not to
 compete as a benchmark.
 
-## Method
+## 4. Method
+
+![ring recovery by topology](reports/figures/by-topology.png)
+
+Camouflage acts on structure, so the ring's shape decides how long it survives. A
+clique is a dense subgraph and is still 10% recovered at camouflage 2.0; star and
+cycle are the sparsest and are gone by 1.0. The headline figure averages over all
+four, which hides a spread that wide.
+
+![the three models, including the feature-only control](reports/figures/model-comparison.png)
+
+MLP reads node features and cannot see the graph at all, so whatever it scores is
+available without any structure. It is the floor the graph models have to clear
+before any of this is about collusion rather than about features.
 
 **Generator** (`src/ringfaith/generate.py`). A Barabási–Albert background graph
 (Barabási & Albert, *Science* 286, 1999) of legitimate nodes, then `n_rings`
@@ -405,7 +445,7 @@ evaluated at fixed budgets of 1, 3, 5, 10 and 20 edges from the same scoring
 pass. The analytic null `n_relevant / n_candidates` carries no `k` term, so lift
 is comparable across budgets; `tests/test_metrics.py` pins that at each one.
 
-## Limitations
+## 5. Limitations
 
 - **Synthetic only.** No real transaction graph. The generator is a controlled
   instrument for a specific question, not a claim about production data.
@@ -438,7 +478,7 @@ is comparable across budgets; `tests/test_metrics.py` pins that at each one.
 - **Small graphs.** Dense adjacency is `O(N²)`; everything here is under ~1.5k
   nodes. Nothing about scaling is tested.
 
-## Reproduce
+## 6. Reproducibility
 
 ```bash
 make venv     # .venv + editable install
@@ -452,7 +492,7 @@ Every table above is regenerated by `experiments/make_tables.py` from the CSVs
 in `reports/`, which are written by `experiments/run_sweep.py`. No number in
 this README was typed by hand.
 
-## Layout
+## 7. Repository layout
 
 ```
 src/ringfaith/
@@ -468,7 +508,7 @@ reports/        result CSVs and JSON written by the runs above
                 (faithfulness_raw.csv.gz is the 131k-row per-node table)
 ```
 
-## References
+## 8. References
 
 Verified to exist at the time of writing; anything I could not resolve was left out.
 

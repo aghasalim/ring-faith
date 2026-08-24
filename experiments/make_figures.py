@@ -146,11 +146,128 @@ def faithfulness(out: Path) -> Path:
     return out
 
 
+def by_topology(out: Path) -> Path:
+    """Ring recovery per ring shape, which is what camouflage acts on.
+
+    A clique of colluders is a dense subgraph and survives longest -- still 10%
+    recovered at camouflage 2.0 where every other shape is at zero. Star and cycle
+    are the sparsest and are gone by camouflage 1.0. Averaging over topologies, as
+    the headline figure does, hides a spread that wide.
+    """
+    table = _load("detection_summary.csv", DETECTION_COLUMNS)
+    gcn = table[table.model == "gcn"]
+    topologies = sorted(gcn.topology.unique())
+
+    figure, (left, right) = plt.subplots(1, 2, figsize=(12.5, 4.4), sharex=True)
+    for topology in topologies:
+        rows = gcn[gcn.topology == topology].sort_values("camouflage")
+        left.plot(rows.camouflage, rows.auc, "o-", lw=1.8, label=topology)
+        right.plot(rows.camouflage, rows.ring_recall, "o-", lw=1.8, label=topology)
+    for ax, title, ylabel in (
+        (left, "node AUC holds up everywhere", "AUC"),
+        (right, "ring recovery does not", "ring recall"),
+    ):
+        ax.set_xlabel("camouflage")
+        ax.set_ylabel(ylabel)
+        ax.set_ylim(0, 1.02)
+        ax.set_title(title, fontsize=10)
+        ax.spines[["top", "right"]].set_visible(False)
+    left.legend(frameon=False, fontsize=8, title="ring topology", title_fontsize=8)
+    figure.tight_layout()
+    figure.savefig(out, dpi=110, bbox_inches="tight")
+    plt.close(figure)
+    return out
+
+
+def model_comparison(out: Path) -> Path:
+    """The three models, including the one that cannot see the graph.
+
+    MLP reads node features only. Whatever it scores is available without any
+    structure at all, so it is the floor the graph models have to beat before any
+    of this is about collusion.
+    """
+    table = _load("detection_summary.csv", DETECTION_COLUMNS)
+    models = ["gcn", "sage", "mlp"]
+    colours = {"gcn": "#2166ac", "sage": "#67a9cf", "mlp": "#bdbdbd"}
+
+    figure, axes = plt.subplots(1, 3, figsize=(13, 4.2), sharex=True)
+    for ax, (column, label) in zip(
+        axes,
+        [("auc", "node AUC"), ("ap", "average precision"), ("ring_recall", "ring recall")],
+        strict=True,
+    ):
+        for model in models:
+            rows = table[table.model == model].groupby("camouflage")[column].mean()
+            style = "s--" if model == "mlp" else "o-"
+            ax.plot(rows.index, rows.values, style, color=colours[model], lw=2,
+                    label=f"{model} (no graph)" if model == "mlp" else model)
+        ax.set_xlabel("camouflage")
+        ax.set_ylabel(label)
+        ax.set_ylim(0, 1.02)
+        ax.spines[["top", "right"]].set_visible(False)
+    axes[0].legend(frameon=False, fontsize=8)
+    figure.suptitle(
+        "Averaged over topologies and seeds. MLP is the feature-only floor: "
+        "the graph models earn the gap above it.",
+        fontsize=10, y=0.02,
+    )
+    figure.tight_layout(rect=(0, 0.06, 1, 1))
+    figure.savefig(out, dpi=110, bbox_inches="tight")
+    plt.close(figure)
+    return out
+
+
+def budget_sensitivity(out: Path) -> Path:
+    """Faithfulness against how many edges the explainer is allowed to name.
+
+    ``oracle`` hands the explainer the true number of ring edges, which is the
+    budget the original version of this repo measured at and is not available at
+    inference time. The fixed budgets are what an investigator actually gets.
+    """
+    table = _load("faithfulness_summary.csv", FAITH_COLUMNS).dropna(subset=["lift"])
+    detected = table[(table.model == "gcn") & (table.detected.astype(str) == "1")]
+    order = ["k1", "k3", "k5", "k10", "k20", "oracle"]
+    explainers = ["ig", "grad", "gnnexplainer", "random"]
+
+    figure, (left, right) = plt.subplots(1, 2, figsize=(12.5, 4.4))
+    for explainer in explainers:
+        rows = (
+            detected[detected.explainer == explainer]
+            .groupby("k_mode")[["precision", "lift"]].mean()
+            .reindex(order)
+        )
+        positions = np.arange(len(order))
+        style = "s--" if explainer == "random" else "o-"
+        left.plot(positions, rows.precision, style,
+                  color=EXPLAINER_COLOURS[explainer], lw=1.8, label=explainer)
+        right.plot(positions, rows.lift, style,
+                   color=EXPLAINER_COLOURS[explainer], lw=1.8, label=explainer)
+    for ax, ylabel, title in (
+        (left, "precision", "raw precision rises with a tighter budget"),
+        (right, "lift over the random null", "lift is flatter, because the null moves too"),
+    ):
+        ax.set_xticks(np.arange(len(order)))
+        ax.set_xticklabels(order)
+        ax.set_xlabel("explanation budget")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title, fontsize=10)
+        ax.spines[["top", "right"]].set_visible(False)
+    right.axhline(1.0, color="0.2", lw=1.0)
+    left.legend(frameon=False, fontsize=8)
+    figure.tight_layout()
+    figure.savefig(out, dpi=110, bbox_inches="tight")
+    plt.close(figure)
+    return out
+
+
 def main() -> None:
     FIGURES.mkdir(parents=True, exist_ok=True)
     for path in (
         detection_vs_recovery(FIGURES / "detection-vs-recovery.png"),
         faithfulness(FIGURES / "faithfulness.png"),
+        by_topology(FIGURES / "by-topology.png"),
+        model_comparison(FIGURES / "model-comparison.png"),
+        budget_sensitivity(FIGURES / "budget-sensitivity.png"),
     ):
         print(f"wrote {path.relative_to(ROOT)}")
 
