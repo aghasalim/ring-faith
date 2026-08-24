@@ -25,6 +25,14 @@ typed by hand.
 
 ## Findings
 
+![node AUC against ring recovery under camouflage](reports/figures/detection-vs-recovery.png)
+
+This is the gap the repo exists to measure. Push camouflage to 2.0 and the GCN's
+node AUC only slides from 0.96 to 0.71, which still reads as a working model. Ring
+recovery over the same range goes from 78% to 2%. An investigator handed that model
+gets a ranked list that scores well and surfaces essentially none of the collusion
+it was built to find.
+
 **F1 — Raw explanation overlap is mostly the null, not the explainer.**
 Across the 16 topology × camouflage cells, GNNExplainer's raw top-k precision
 correlates **r = +0.945** (p = 3.4e-08) with the *analytic random baseline* for
@@ -158,6 +166,16 @@ tie-breaking as a guard, with a test pinning it. Recording the near-miss because
 the wrong version of that paragraph was already written down.
 
 ## Results
+
+![explainer precision against the random-edge null](reports/figures/faithfulness.png)
+
+Left: even Integrated Gradients puts only 41% of its top edges inside the ring, and
+the random-edge expectation for the same neighbourhoods is 23%, so a raw precision
+number is mostly reporting neighbourhood density. Right: lift over that null *rises*
+with camouflage, from 1.3x to 3.3x, because the null thins faster than the explainer
+degrades — which is why lift has to be read alongside precision rather than instead
+of it. The random explainer sits on 1.0 throughout; that is the check on the null,
+not a result.
 
 `lift over null` is the column that matters: precision divided by the analytic random baseline for that cell. `random null` is that baseline. `nodes explained` is the support.
 

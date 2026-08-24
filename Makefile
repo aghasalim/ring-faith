@@ -21,6 +21,9 @@ report:  ## rebuild the README tables from reports/*.csv
 
 all: test sweep demo report  ## everything
 
+figures:  ## redraw the README figures from reports/*.csv
+	$(PY) experiments/make_figures.py
+
 clean:  ## remove caches
 	rm -rf .pytest_cache **/__pycache__ src/*.egg-info
 
