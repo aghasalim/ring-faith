@@ -220,17 +220,6 @@ Verified to exist at the time of writing; anything I could not resolve was left 
   arXiv:1706.02216, 2017.
 - Barabási, Albert. *Emergence of Scaling in Random Networks.* Science 286, 1999.
 
-## References
-
-The papers and sources this implementation follows. Each one is here because
-the code uses the method, the dataset or the metric it describes.
-
-- **Ying, Bourgeois, You, Zitnik, Leskovec. GNNExplainer: Generating Explanations for Graph Neural Networks. NeurIPS 2019.** [arXiv:1903.03894](https://arxiv.org/abs/1903.03894) the main explainer under test.
-- **Luo, Cheng, Xu et al. Parameterized Explainer for Graph Neural Network. NeurIPS 2020.** [arXiv:2011.04573](https://arxiv.org/abs/2011.04573) PGExplainer, the second explainer.
-- **Sundararajan, Taly, Yan. Axiomatic Attribution for Deep Networks. ICML 2017.** [arXiv:1703.01365](https://arxiv.org/abs/1703.01365) integrated gradients, the attribution baseline.
-- **Kipf, Welling. Semi-Supervised Classification with Graph Convolutional Networks. ICLR 2017.** [arXiv:1609.02907](https://arxiv.org/abs/1609.02907) GCN.
-- **Hamilton, Ying, Leskovec. Inductive Representation Learning on Large Graphs. NeurIPS 2017.** [arXiv:1706.02216](https://arxiv.org/abs/1706.02216) GraphSAGE.
-
 ## License
 
 MIT.
