@@ -44,6 +44,10 @@ This is the gap the repo exists to measure.
 
 ![node AUC against ring recovery under camouflage](reports/figures/detection-vs-recovery.png)
 
+![the same runs animated across the four measured camouflage levels](reports/figures/camouflage-sweep.gif)
+
+*The camouflage dial steps through its four measured levels while the model, the topologies and the seeds stay fixed, so the only thing moving is how far node AUC and ring recovery have come apart.*
+
 Full detail in [notes/METHODS.md](notes/METHODS.md#1-findings).
 ### What I did not find
 I did not find a bug in this harness.
