@@ -477,7 +477,7 @@ is comparable across budgets;`tests/test_metrics.py` pins that at each one.
 ## 1. Findings
 
 
-![node AUC against ring recovery under camouflage](reports/figures/detection-vs-recovery.png)
+![node AUC against ring recovery under camouflage](../reports/figures/detection-vs-recovery.png)
 
 This is the gap the repo exists to measure. Push camouflage to 2.0 and the GCN's
 node AUC only slides from 0.96 to 0.71, which still reads as a working model. Ring
@@ -603,7 +603,7 @@ pins both halves.
 ## 2. Results
 
 
-![explainer precision against the random-edge null](reports/figures/faithfulness.png)
+![explainer precision against the random-edge null](../reports/figures/faithfulness.png)
 
 Left: even Integrated Gradients puts only 41% of its top edges inside the ring, and
 the random-edge expectation for the same neighbourhoods is 23%, so a raw precision
@@ -621,14 +621,14 @@ Tables 1 to 6 are the oracle budget on fraud nodes the model detected (score > 0
 ## 4. Method
 
 
-![ring recovery by topology](reports/figures/by-topology.png)
+![ring recovery by topology](../reports/figures/by-topology.png)
 
 Camouflage acts on structure, so the ring's shape decides how long it survives. A
 clique is a dense subgraph and is still 10% recovered at camouflage 2.0; star and
 cycle are the sparsest and are gone by 1.0. The headline figure averages over all
 four, which hides a spread that wide.
 
-![the three models, including the feature-only control](reports/figures/model-comparison.png)
+![the three models, including the feature-only control](../reports/figures/model-comparison.png)
 
 MLP reads node features and cannot see the graph at all, so whatever it scores is
 available without any structure. It is the floor the graph models have to clear
