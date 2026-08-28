@@ -185,7 +185,9 @@ the wrong version of that paragraph was already written down.
 Left: even Integrated Gradients puts only 41% of its top edges inside the ring, and
 the random-edge expectation for the same neighbourhoods is 23%, so a raw precision
 number is mostly reporting neighbourhood density. Right: lift over that null *rises*
-with camouflage, from 1.3x to 3.3x, because the null thins faster than the explainer
+with camouflage, at a rate that differs by explainer. GNNExplainer goes from 1.3x at
+camouflage 0 to 2.4x at camouflage 2.0. Integrated Gradients goes from 1.8x to 3.1x,
+with its peak of 3.3x at camouflage 1.0. The null thins faster than the explainer
 degrades, which is why lift has to be read alongside precision rather than instead
 of it. The random explainer sits on 1.0 throughout; that is the check on the null,
 not a result.
@@ -610,7 +612,9 @@ pins both halves.
 Left: even Integrated Gradients puts only 41% of its top edges inside the ring, and
 the random-edge expectation for the same neighbourhoods is 23%, so a raw precision
 number is mostly reporting neighbourhood density. Right: lift over that null *rises*
-with camouflage, from 1.3x to 3.3x, because the null thins faster than the explainer
+with camouflage, at a rate that differs by explainer. GNNExplainer goes from 1.3x at
+camouflage 0 to 2.4x at camouflage 2.0. Integrated Gradients goes from 1.8x to 3.1x,
+with its peak of 3.3x at camouflage 1.0. The null thins faster than the explainer
 degrades, which is why lift has to be read alongside precision rather than instead
 of it. The random explainer sits on 1.0 throughout; that is the check on the null,
 not a result.
