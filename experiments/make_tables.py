@@ -146,7 +146,7 @@ def main() -> None:
         "GNNExpl precision", "random null", "lift over null", "candidate edges",
         "nodes explained",
     ]
-    parts.append("### Table 1 — GCN: detection vs explanation faithfulness\n\n" + md(h))
+    parts.append("### Table 1. GCN: detection vs explanation faithfulness\n\n" + md(h))
 
     # 2. Explainer comparison, pooled over topology and camouflage.
     e = (
@@ -155,13 +155,13 @@ def main() -> None:
         .round(3)
     )
     e.columns = [f"{a} {b}" for a, b in e.columns]
-    parts.append("### Table 2 — explainers, pooled over all cells\n\n" + md(e.reset_index()))
+    parts.append("### Table 2. explainers, pooled over all cells\n\n" + md(e.reset_index()))
 
     # 3. Does structure help detection at all? (GNN vs structure-blind MLP)
     m = det.groupby(["topology", "model"])[["auc", "ring_recall"]].mean().round(3).reset_index()
     m = m.pivot(index="topology", columns="model", values=["auc", "ring_recall"])
     m.columns = [f"{a} ({b})" for a, b in m.columns]
-    parts.append("### Table 3 — structure-blind baseline\n\n" + md(m.reset_index()))
+    parts.append("### Table 3. structure-blind baseline\n\n" + md(m.reset_index()))
 
     # 4. The dissociation, isolated: rank topologies by AUC and by lift.
     diss = (
@@ -169,7 +169,7 @@ def main() -> None:
     )
     diss["AUC rank"] = diss["node AUC"].rank(ascending=False).astype(int)
     diss["lift rank"] = diss["lift over null"].rank(ascending=False).astype(int)
-    parts.append("### Table 4 — the dissociation (averaged over camouflage)\n\n" + md(diss.reset_index()))
+    parts.append("### Table 4. the dissociation (averaged over camouflage)\n\n" + md(diss.reset_index()))
 
     # 5. Null calibration: the random explainer must sit at lift 1.0.
     r = fai[fai.explainer == "random"]
@@ -181,7 +181,7 @@ def main() -> None:
             "n measurements": len(r),
         }]
     )
-    parts.append("### Table 5 — random-explainer control calibration\n\n" + md(cal))
+    parts.append("### Table 5. random-explainer control calibration\n\n" + md(cal))
 
     # 6. The statistics quoted in the README findings, so they are reproducible.
     stat_rows = []
@@ -230,25 +230,25 @@ def main() -> None:
                 "p": "-",
             }
         )
-    parts.append("### Table 6 — statistics quoted in the findings\n\n" + md(pd.DataFrame(stat_rows)))
+    parts.append("### Table 6. statistics quoted in the findings\n\n" + md(pd.DataFrame(stat_rows)))
 
     # 7. Explanations of fraud the model missed, against explanations of fraud it caught.
     parts.append(
-        "### Table 7 — faithfulness on detected vs missed fraud nodes (oracle budget)\n\n"
+        "### Table 7. faithfulness on detected vs missed fraud nodes (oracle budget)\n\n"
         + md(detected_vs_missed(fai_all))
     )
 
     # 8. What happens when the budget stops being an oracle.
     parts.append(
-        "### Table 8 — mean lift over the null by explanation budget (detected nodes)\n\n"
+        "### Table 8. mean lift over the null by explanation budget (detected nodes)\n\n"
         + md(budget_sensitivity(fai_all, detected=1))
     )
     parts.append(
-        "### Table 9 — mean lift over the null by explanation budget (missed nodes)\n\n"
+        "### Table 9. mean lift over the null by explanation budget (missed nodes)\n\n"
         + md(budget_sensitivity(fai_all, detected=0))
     )
     parts.append(
-        "### Table 10 — does the gradient still beat GNNExplainer at a realistic budget?\n\n"
+        "### Table 10. does the gradient still beat GNNExplainer at a realistic budget?\n\n"
         + md(budget_head_to_head(fai_all))
     )
 
