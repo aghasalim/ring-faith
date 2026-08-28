@@ -46,7 +46,7 @@ This is the gap the repo exists to measure.
 
 ![the same runs animated across the four measured camouflage levels](reports/figures/camouflage-sweep.gif)
 
-*The camouflage dial steps through its four measured levels while the model, the topologies and the seeds stay fixed, so the only thing moving is how far node AUC and ring recovery have come apart.*
+*Four measured camouflage levels, one model, the same topologies and seeds throughout. Watch node AUC hold its ground while ring recovery falls away from it.*
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#1-findings).
 ### What I did not find
