@@ -2,7 +2,7 @@
 
 **In GNN fraud detection, does the explanation point at the ring the model supposedly found?**
 
-[![tests](https://img.shields.io/badge/tests-52%20passing-brightgreen.svg)](tests/)
+[![ci](https://github.com/aghasalim/ring-faith/actions/workflows/ci.yml/badge.svg)](https://github.com/aghasalim/ring-faith/actions/workflows/ci.yml)
 [![licence](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
 ---
