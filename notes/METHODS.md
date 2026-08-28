@@ -23,9 +23,11 @@ still scores 0.71 AUC, which reads as a working model, while ring recovery has
 fallen from 78% to 2%. Explanation faithfulness never gets far off the floor:
 Integrated Gradients, the best of the four, puts 41% of its top edges inside the
 ring against a 23% random-edge expectation. Lift over that null *rises* with
-camouflage, from 1.3x to 3.3x, because the null thins faster than the explainer
-degrades, which is why lift has to be read alongside precision rather than
-instead of it.
+camouflage, at a rate that differs by explainer. GNNExplainer goes from 1.3x at
+camouflage 0 to 2.4x at camouflage 2.0. Integrated Gradients goes from 1.8x to 3.1x,
+with its peak of 3.3x at camouflage 1.0. The null thins faster than the explainer
+degrades, which is why lift has to be read alongside precision rather than instead
+of it.
 
 **Contributions.** (i) A planted-ring benchmark where the structure to be
 explained is known by construction. (ii) An analytic random-edge null, with a
@@ -117,8 +119,8 @@ The generator appends ring members after the background graph, so their node ids
 are contiguous at the top, exactly what happens when you build a graph in
 construction order. A 60/20/20 contiguous split puts **0 of 48 fraud nodes in
 train and all 48 in test**; AUC is undefined and the model cannot learn the
-class at all.`stratified_split` on the same graph gives test AUC 0.988.
-Reproduce with`make demo` (`reports/degenerate_split.json`).
+class at all. `stratified_split` on the same graph gives test AUC 0.988.
+Reproduce with `make demo` (`reports/degenerate_split.json`).
 
 **F10. Instrument: the random control is calibrated.**
 Over 3,989 measurements the random explainer scores mean precision **0.2293**
@@ -151,7 +153,7 @@ row sum of the weighted adjacency, so scaling every edge weight by the same
 factor cancels, the forward pass is constant along the entire straight-line
 path integrated gradients walks. A degree-zero homogeneous function has
 `∇f(αw) = ∇f(w)/α`, so the path average is a positive multiple of the gradient at
-unit weights and the two produce an identical ranking. GCN's`A + I`
+unit weights and the two produce an identical ranking. GCN's `A + I`
 normalisation breaks the homogeneity, and there they differ and IG wins. Fifty
 backward passes buy exactly nothing on a mean-aggregating model, which is worth
 knowing before paying for them.
@@ -163,10 +165,10 @@ pins both halves.
 I did not find a bug in this harness. I looked for the two I most expected.
 
 The id-ordering trap (F9) is real, but I built the generator that way on purpose
-and guarded it from the start with`assert_not_degenerate`, so it never
+and guarded it from the start with `assert_not_degenerate`, so it never
 corrupted a result, it is a demonstration, not a postmortem.
 
-The other was tie-breaking. Ring members hold the highest node ids and`edges`
+The other was tie-breaking. Ring members hold the highest node ids and `edges`
 is sorted by id, so any block of tied explainer scores ranked in index order
 would push ring edges systematically to the back and bias faithfulness
 downward. I wrote that up as a measured finding before measuring it. It is not
@@ -188,9 +190,9 @@ degrades, which is why lift has to be read alongside precision rather than inste
 of it. The random explainer sits on 1.0 throughout; that is the check on the null,
 not a result.
 
-`lift over null` is the column that matters: precision divided by the analytic random baseline for that cell.`random null` is that baseline.`nodes explained` is the support.
+`lift over null` is the column that matters: precision divided by the analytic random baseline for that cell. `random null` is that baseline. `nodes explained` is the support.
 
-Tables 1 to 6 are the oracle budget on fraud nodes the model detected (score > 0.5), which is what the original version of this repo measured; they are unchanged except for the added`ig` rows. Tables 7 to 10 are the measurements that close the three gaps: missed nodes, a third explainer, and budgets that are not oracles.
+Tables 1 to 6 are the oracle budget on fraud nodes the model detected (score > 0.5), which is what the original version of this repo measured; they are unchanged except for the added `ig` rows. Tables 7 to 10 are the measurements that close the three gaps: missed nodes, a third explainer, and budgets that are not oracles.
 
 ### Table 1, GCN: detection vs explanation faithfulness
 
@@ -226,7 +228,7 @@ Tables 1 to 6 are the oracle budget on fraud nodes the model detected (score > 0
 | sage    | ig           |            0.389 |           0.204 |                     0.232 |                    0.188 |       2.642 |      2.706 |
 | sage    | random       |            0.233 |           0.217 |                     0.232 |                    0.188 |       1.001 |      0.909 |
 
-`sage grad` and`sage ig` are identical to every decimal because on a
+`sage grad` and `sage ig` are identical to every decimal because on a
 mean-aggregating model they are the same estimator, see F12.
 
 ### Table 3, structure-blind baseline
@@ -323,8 +325,8 @@ mean-aggregating model they are the same estimator, see F12.
 
 Table 7 is paired by experimental cell, not by node: nodes inside one cell share
 a graph and a trained model, so pooling them would overstate n by two orders of
-magnitude. Tables 8 and 9 read down the`random` row first, the analytic null
-has no`k` term, so a uniform ranking has to sit at ~1.0 in every column, and it
+magnitude. Tables 8 and 9 read down the `random` row first, the analytic null
+has no `k` term, so a uniform ranking has to sit at ~1.0 in every column, and it
 does. In Table 10 a positive margin means the challenger beats GNNExplainer.
 
 ### 2.1 Does the budget change the answer?
@@ -371,10 +373,10 @@ available without any structure. It is the floor the graph models have to clear
 before any of this is about collusion rather than about features.
 
 **Generator** (`src/ringfaith/generate.py`). A Barabási, Albert background graph
-(Barabási & Albert, *Science* 286, 1999) of legitimate nodes, then`n_rings`
+(Barabási & Albert, *Science* 286, 1999) of legitimate nodes, then `n_rings`
 disjoint rings whose members are appended as new nodes. Four motif topologies:
 
-| topology | motif edges per ring of size`s` | shape |
+| topology | motif edges per ring of size `s` | shape |
 |---|---|---|
 |`clique` |`s(s-1)/2` | everyone transacts with everyone |
 |`star` |`s-1` | one hub, spokes |
@@ -382,12 +384,12 @@ disjoint rings whose members are appended as new nodes. Four motif topologies:
 |`bipartite` |`⌊s/2⌋·⌈s/2⌉` | mule accounts ↔ merchants |
 
 `camouflage` controls hiding: each ring member gets `1 + round(camouflage ×
-d_ring)` extra edges to *legitimate* nodes, chosen by preferential attachment,
-where`d_ring` is its degree inside the motif. At`camouflage=0` a member has
-exactly one legitimate edge (enough to stay connected); at`2.0` its cover
+d_ring) ` extra edges to *legitimate* nodes, chosen by preferential attachment,
+where `d_ring` is its degree inside the motif. At `camouflage=0` a member has
+exactly one legitimate edge (enough to stay connected); at `2.0` its cover
 traffic outnumbers its motif edges roughly two to one.
 
-Node features are`N(0,1)` with a single mean shift of`feature_signal=0.35` on
+Node features are `N(0,1)` with a single mean shift of `feature_signal=0.35` on
 dimension 0 for ring members. That shift is deliberately weak: it is the only
 per-node signal, so a model that beats the structure-blind MLP has to be using
 the graph. Ground truth is exact, node labels, ring ids, and the motif's own
@@ -409,13 +411,13 @@ set, the edges of the target's 2-hop subgraph.
 -`ig`, integrated gradients (arXiv:1703.01365) along the edge-weight path from
   the empty graph to the real one, midpoint rule, 50 steps. Since the input
   difference is exactly 1 on every edge, the attribution reduces to the
-  path-averaged gradient, so`grad` is the same quantity read at a single point
+  path-averaged gradient, so `grad` is the same quantity read at a single point
   on that path, which is what makes the pair informative. Absolute value is taken
-  for the same reason`grad` takes it, to rank by influence rather than by
+  for the same reason `grad` takes it, to rank by influence rather than by
   direction.
 -`random`, uniform scores. The mandatory null.
 
-Every explainer takes a`target_class`. The usual convention is to explain
+Every explainer takes a `target_class`. The usual convention is to explain
 whatever the model predicted, and the sweep overrides it to the *fraud* class for
 every target. On a detected node the two are the same thing, so no previously
 reported number moves; on a missed node they are not, and without the override
@@ -433,12 +435,12 @@ explained.
 recall (a ring counts as recovered when ≥80% of its members land in the top-K
 nodes, K = the true fraud count, the ≥80% convention is TravelFraudBench's);
 and edge faithfulness, the overlap between an explainer's top-k candidate edges
-and the planted motif edges. The budget`k` defaults to the number of motif
+and the planted motif edges. The budget `k` defaults to the number of motif
 edges in the candidate set, which makes precision = recall = F1, so one number
 per node, but that default is an oracle, so every explainer's scores are also
 evaluated at fixed budgets of 1, 3, 5, 10 and 20 edges from the same scoring
-pass. The analytic null`n_relevant / n_candidates` carries no`k` term, so lift
-is comparable across budgets;`tests/test_metrics.py` pins that at each one.
+pass. The analytic null `n_relevant / n_candidates` carries no `k` term, so lift
+is comparable across budgets; `tests/test_metrics.py` pins that at each one.
 
 ## 5. Limitations
 
@@ -470,7 +472,7 @@ is comparable across budgets;`tests/test_metrics.py` pins that at each one.
 - **Faithfulness on missed nodes is measured per node, not per ring.** A node the
   model missed may still sit in a ring that was mostly recovered. Ring-level
   conditioning would be a different and probably sharper cut.
-- **Small graphs.** Dense adjacency is`O(N²)`; everything here is under ~1.5k
+- **Small graphs.** Dense adjacency is `O(N²)`; everything here is under ~1.5k
   nodes. Nothing about scaling is tested.
 
 
@@ -558,8 +560,8 @@ The generator appends ring members after the background graph, so their node ids
 are contiguous at the top, exactly what happens when you build a graph in
 construction order. A 60/20/20 contiguous split puts **0 of 48 fraud nodes in
 train and all 48 in test**; AUC is undefined and the model cannot learn the
-class at all.`stratified_split` on the same graph gives test AUC 0.988.
-Reproduce with`make demo` (`reports/degenerate_split.json`).
+class at all. `stratified_split` on the same graph gives test AUC 0.988.
+Reproduce with `make demo` (`reports/degenerate_split.json`).
 
 **F10. Instrument: the random control is calibrated.**
 Over 3,989 measurements the random explainer scores mean precision **0.2293**
@@ -592,7 +594,7 @@ row sum of the weighted adjacency, so scaling every edge weight by the same
 factor cancels, the forward pass is constant along the entire straight-line
 path integrated gradients walks. A degree-zero homogeneous function has
 `∇f(αw) = ∇f(w)/α`, so the path average is a positive multiple of the gradient at
-unit weights and the two produce an identical ranking. GCN's`A + I`
+unit weights and the two produce an identical ranking. GCN's `A + I`
 normalisation breaks the homogeneity, and there they differ and IG wins. Fifty
 backward passes buy exactly nothing on a mean-aggregating model, which is worth
 knowing before paying for them.
@@ -613,9 +615,9 @@ degrades, which is why lift has to be read alongside precision rather than inste
 of it. The random explainer sits on 1.0 throughout; that is the check on the null,
 not a result.
 
-`lift over null` is the column that matters: precision divided by the analytic random baseline for that cell.`random null` is that baseline.`nodes explained` is the support.
+`lift over null` is the column that matters: precision divided by the analytic random baseline for that cell. `random null` is that baseline. `nodes explained` is the support.
 
-Tables 1 to 6 are the oracle budget on fraud nodes the model detected (score > 0.5), which is what the original version of this repo measured; they are unchanged except for the added`ig` rows. Tables 7 to 10 are the measurements that close the three gaps: missed nodes, a third explainer, and budgets that are not oracles.
+Tables 1 to 6 are the oracle budget on fraud nodes the model detected (score > 0.5), which is what the original version of this repo measured; they are unchanged except for the added `ig` rows. Tables 7 to 10 are the measurements that close the three gaps: missed nodes, a third explainer, and budgets that are not oracles.
 
 
 ## 4. Method
@@ -635,10 +637,10 @@ available without any structure. It is the floor the graph models have to clear
 before any of this is about collusion rather than about features.
 
 **Generator** (`src/ringfaith/generate.py`). A Barabási, Albert background graph
-(Barabási & Albert, *Science* 286, 1999) of legitimate nodes, then`n_rings`
+(Barabási & Albert, *Science* 286, 1999) of legitimate nodes, then `n_rings`
 disjoint rings whose members are appended as new nodes. Four motif topologies:
 
-| topology | motif edges per ring of size`s` | shape |
+| topology | motif edges per ring of size `s` | shape |
 |---|---|---|
 |`clique` |`s(s-1)/2` | everyone transacts with everyone |
 |`star` |`s-1` | one hub, spokes |
@@ -646,12 +648,12 @@ disjoint rings whose members are appended as new nodes. Four motif topologies:
 |`bipartite` |`⌊s/2⌋·⌈s/2⌉` | mule accounts ↔ merchants |
 
 `camouflage` controls hiding: each ring member gets `1 + round(camouflage ×
-d_ring)` extra edges to *legitimate* nodes, chosen by preferential attachment,
-where`d_ring` is its degree inside the motif. At`camouflage=0` a member has
-exactly one legitimate edge (enough to stay connected); at`2.0` its cover
+d_ring) ` extra edges to *legitimate* nodes, chosen by preferential attachment,
+where `d_ring` is its degree inside the motif. At `camouflage=0` a member has
+exactly one legitimate edge (enough to stay connected); at `2.0` its cover
 traffic outnumbers its motif edges roughly two to one.
 
-Node features are`N(0,1)` with a single mean shift of`feature_signal=0.35` on
+Node features are `N(0,1)` with a single mean shift of `feature_signal=0.35` on
 dimension 0 for ring members. That shift is deliberately weak: it is the only
 per-node signal, so a model that beats the structure-blind MLP has to be using
 the graph. Ground truth is exact, node labels, ring ids, and the motif's own
@@ -673,13 +675,13 @@ set, the edges of the target's 2-hop subgraph.
 -`ig`, integrated gradients (arXiv:1703.01365) along the edge-weight path from
   the empty graph to the real one, midpoint rule, 50 steps. Since the input
   difference is exactly 1 on every edge, the attribution reduces to the
-  path-averaged gradient, so`grad` is the same quantity read at a single point
+  path-averaged gradient, so `grad` is the same quantity read at a single point
   on that path, which is what makes the pair informative. Absolute value is taken
-  for the same reason`grad` takes it, to rank by influence rather than by
+  for the same reason `grad` takes it, to rank by influence rather than by
   direction.
 -`random`, uniform scores. The mandatory null.
 
-Every explainer takes a`target_class`. The usual convention is to explain
+Every explainer takes a `target_class`. The usual convention is to explain
 whatever the model predicted, and the sweep overrides it to the *fraud* class for
 every target. On a detected node the two are the same thing, so no previously
 reported number moves; on a missed node they are not, and without the override
@@ -697,9 +699,9 @@ explained.
 recall (a ring counts as recovered when ≥80% of its members land in the top-K
 nodes, K = the true fraud count, the ≥80% convention is TravelFraudBench's);
 and edge faithfulness, the overlap between an explainer's top-k candidate edges
-and the planted motif edges. The budget`k` defaults to the number of motif
+and the planted motif edges. The budget `k` defaults to the number of motif
 edges in the candidate set, which makes precision = recall = F1, so one number
 per node, but that default is an oracle, so every explainer's scores are also
 evaluated at fixed budgets of 1, 3, 5, 10 and 20 edges from the same scoring
-pass. The analytic null`n_relevant / n_candidates` carries no`k` term, so lift
-is comparable across budgets;`tests/test_metrics.py` pins that at each one.
+pass. The analytic null `n_relevant / n_candidates` carries no `k` term, so lift
+is comparable across budgets; `tests/test_metrics.py` pins that at each one.
