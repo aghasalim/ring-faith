@@ -380,10 +380,10 @@ disjoint rings whose members are appended as new nodes. Four motif topologies:
 
 | topology | motif edges per ring of size `s` | shape |
 |---|---|---|
-|`clique` |`s(s-1)/2` | everyone transacts with everyone |
-|`star` |`s-1` | one hub, spokes |
-|`cycle` |`s` | circular pass-through |
-|`bipartite` |`⌊s/2⌋·⌈s/2⌉` | mule accounts ↔ merchants |
+| `clique` | `s(s-1)/2` | everyone transacts with everyone |
+| `star` | `s-1` | one hub, spokes |
+| `cycle` | `s` | circular pass-through |
+| `bipartite` | `⌊s/2⌋·⌈s/2⌉` | mule accounts ↔ merchants |
 
 `camouflage` controls hiding: each ring member gets `1 + round(camouflage ×
 d_ring) ` extra edges to *legitimate* nodes, chosen by preferential attachment,
@@ -405,19 +405,19 @@ class-balanced cross-entropy, early stopping on validation loss.
 **Explainers** (`src/ringfaith/explain.py`). All four score the *same* candidate
 set, the edges of the target's 2-hop subgraph.
 
--`gnnexplainer`, a learned sigmoid edge mask (arXiv:1903.03894), optimised to
+- `gnnexplainer`, a learned sigmoid edge mask (arXiv:1903.03894), optimised to
   preserve the target's class under size and entropy penalties. 150 steps.
--`grad``|∂logit/∂edge_weight|` at unit weights. This is gradient×input on
+- `grad`, `|∂logit/∂edge_weight|` at unit weights. This is gradient×input on
   the edge weights, but since every input is exactly 1, the product degenerates
   to the plain absolute gradient. Worth stating rather than dressing up. 1 step.
--`ig`, integrated gradients (arXiv:1703.01365) along the edge-weight path from
+- `ig`, integrated gradients (arXiv:1703.01365) along the edge-weight path from
   the empty graph to the real one, midpoint rule, 50 steps. Since the input
   difference is exactly 1 on every edge, the attribution reduces to the
   path-averaged gradient, so `grad` is the same quantity read at a single point
   on that path, which is what makes the pair informative. Absolute value is taken
   for the same reason `grad` takes it, to rank by influence rather than by
   direction.
--`random`, uniform scores. The mandatory null.
+- `random`, uniform scores. The mandatory null.
 
 Every explainer takes a `target_class`. The usual convention is to explain
 whatever the model predicted, and the sweep overrides it to the *fraud* class for
@@ -461,7 +461,7 @@ is comparable across budgets; `tests/test_metrics.py` pins that at each one.
 - **Homophily by construction.** Ring members share a feature shift *and* are
   densely connected, which is the regime GNNs are best in. Heterophilous fraud
   (a mule that looks exactly like its legitimate neighbours) is not covered.
-- **The oracle budget flatters the plain gradient specifically.**`k` defaulting
+- **The oracle budget flatters the plain gradient specifically.** `k` defaulting
   to the true number of motif edges is information no investigator has, and F5
   now reports what happens without it. What is still untested is the middle
   ground: a budget picked by a heuristic (a fraction of the candidate set, a

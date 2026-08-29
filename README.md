@@ -265,7 +265,7 @@ Full detail in [notes/METHODS.md](notes/METHODS.md#4-method).
 - **Homophily by construction.** Ring members share a feature shift *and* are
   densely connected, which is the regime GNNs are best in. Heterophilous fraud
   (a mule that looks exactly like its legitimate neighbours) is not covered.
-- **The oracle budget flatters the plain gradient specifically.**`k` defaulting
+- **The oracle budget flatters the plain gradient specifically.** `k` defaulting
   to the true number of motif edges is information no investigator has, and F5
   now reports what happens without it. What is still untested is the middle
   ground: a budget picked by a heuristic (a fraction of the candidate set, a
