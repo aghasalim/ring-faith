@@ -31,3 +31,7 @@ jobs:
           python experiments/run_sweep.py --seeds 1 --n-explain 3 \
             --topologies clique star --camouflage 0.0 1.0 --out /tmp/ci-reports
           python experiments/degenerate_split_demo.py
+
+      # These docs are generated. This fails if someone edits them by hand.
+      - name: Generated docs still match
+        run: python experiments/make_tables.py --check

@@ -11,7 +11,9 @@ from pathlib import Path
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr, wilcoxon
 
-OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("reports")
+CHECK = "--check" in sys.argv[1:]
+_args = [a for a in sys.argv[1:] if not a.startswith("--")]
+OUT = Path(_args[0]) if _args else Path("reports")
 
 
 def md(df: pd.DataFrame) -> str:
@@ -253,7 +255,24 @@ def main() -> None:
     )
 
     text = "\n\n".join(parts) + "\n"
-    (OUT / "tables.md").write_text(text)
+    path = OUT / "tables.md"
+    if CHECK:
+        current = path.read_text() if path.exists() else ""
+        if current != text:
+            cur, want = current.split("\n"), text.split("\n")
+            for i in range(max(len(cur), len(want))):
+                a = cur[i] if i < len(cur) else "<end of file>"
+                b = want[i] if i < len(want) else "<end of file>"
+                if a != b:
+                    raise SystemExit(
+                        f"{path} has drifted from make_tables.py at line {i + 1}.\n"
+                        f"  committed: {a}\n  generated: {b}\n"
+                        "Run `make report` and commit the result. This file is "
+                        "generated, so editing it by hand is undone by the next run."
+                    )
+        print(f"{path} is up to date")
+        return
+    path.write_text(text)
     print(text)
 
 

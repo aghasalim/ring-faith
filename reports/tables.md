@@ -1,4 +1,4 @@
-### Table 1, GCN: detection vs explanation faithfulness
+### Table 1. GCN: detection vs explanation faithfulness
 
 | topology   |   camouflage |   node AUC |   ring recall |   GNNExpl precision |   random null |   lift over null |   candidate edges |   nodes explained |
 |:-----------|-------------:|-----------:|--------------:|--------------------:|--------------:|-----------------:|------------------:|------------------:|
@@ -19,7 +19,7 @@
 | star       |          1   |      0.69  |         0     |               0.242 |         0.175 |            1.53  |            60.784 |               125 |
 | star       |          2   |      0.596 |         0     |               0.174 |         0.109 |            2.048 |            87.112 |               125 |
 
-### Table 2, explainers, pooled over all cells
+### Table 2. explainers, pooled over all cells
 
 | model   | explainer    |   precision mean |   precision std |   random_expectation mean |   random_expectation std |   lift mean |   lift std |
 |:--------|:-------------|-----------------:|----------------:|--------------------------:|-------------------------:|------------:|-----------:|
@@ -32,7 +32,7 @@
 | sage    | ig           |            0.389 |           0.204 |                     0.232 |                    0.188 |       2.642 |      2.706 |
 | sage    | random       |            0.233 |           0.217 |                     0.232 |                    0.188 |       1.001 |      0.909 |
 
-### Table 3, structure-blind baseline
+### Table 3. structure-blind baseline
 
 | topology   |   auc (gcn) |   auc (mlp) |   auc (sage) |   ring_recall (gcn) |   ring_recall (mlp) |   ring_recall (sage) |
 |:-----------|------------:|------------:|-------------:|--------------------:|--------------------:|---------------------:|
@@ -41,7 +41,7 @@
 | cycle      |       0.787 |       0.542 |        0.619 |               0.275 |                   0 |                0.05  |
 | star       |       0.755 |       0.518 |        0.687 |               0.167 |                   0 |                0.092 |
 
-### Table 4, the dissociation (averaged over camouflage)
+### Table 4. the dissociation (averaged over camouflage)
 
 | topology   |   node AUC |   GNNExpl precision |   lift over null |   AUC rank |   lift rank |
 |:-----------|-----------:|--------------------:|-----------------:|-----------:|------------:|
@@ -50,13 +50,13 @@
 | cycle      |      0.787 |               0.186 |            1.614 |          3 |           3 |
 | star       |      0.755 |               0.291 |            1.436 |          4 |           4 |
 
-### Table 5, random-explainer control calibration
+### Table 5. random-explainer control calibration
 
 |   mean random precision |   mean analytic null |   mean lift (should be ~1.0) |   n measurements |
 |------------------------:|---------------------:|-----------------------------:|-----------------:|
 |                  0.2293 |               0.2297 |                        1.001 |             3989 |
 
-### Table 6, statistics quoted in the findings
+### Table 6. statistics quoted in the findings
 
 | test                                                                   | stat               | p         |
 |:-----------------------------------------------------------------------|:-------------------|:----------|
@@ -76,7 +76,7 @@
 | cycle: spearman(camouflage, node AUC) / spearman(camouflage, lift)     | -1.0 / +0.2        | -         |
 | star: spearman(camouflage, node AUC) / spearman(camouflage, lift)      | -1.0 / +0.8        | -         |
 
-### Table 7, faithfulness on detected vs missed fraud nodes (oracle budget)
+### Table 7. faithfulness on detected vs missed fraud nodes (oracle budget)
 
 | model   | explainer    |   detected lift |   detected precision |   detected n |   missed lift |   missed precision |   missed n |   lift difference |   paired cells |   wilcoxon p |
 |:--------|:-------------|----------------:|---------------------:|-------------:|--------------:|-------------------:|-----------:|------------------:|---------------:|-------------:|
@@ -89,7 +89,7 @@
 | sage    | ig           |           2.642 |                0.389 |         1989 |         3.071 |              0.362 |       1009 |            -0.429 |             79 |     0.324    |
 | sage    | random       |           1.001 |                0.233 |         1989 |         0.989 |              0.185 |       1009 |             0.012 |             79 |     0.503    |
 
-### Table 8, mean lift over the null by explanation budget (detected nodes)
+### Table 8. mean lift over the null by explanation budget (detected nodes)
 
 | explainer    |    k1 |    k3 |    k5 |   k10 |   k20 |   oracle |
 |:-------------|------:|------:|------:|------:|------:|---------:|
@@ -98,7 +98,7 @@
 | ig           | 3.242 | 3.258 | 3.075 | 2.548 | 1.975 |    2.604 |
 | random       | 0.922 | 0.976 | 0.979 | 1.005 | 1.008 |    1.001 |
 
-### Table 9, mean lift over the null by explanation budget (missed nodes)
+### Table 9. mean lift over the null by explanation budget (missed nodes)
 
 | explainer    |    k1 |    k3 |    k5 |   k10 |   k20 |   oracle |
 |:-------------|------:|------:|------:|------:|------:|---------:|
@@ -107,7 +107,7 @@
 | ig           | 4.182 | 3.854 | 3.595 | 2.986 | 2.253 |    3.152 |
 | random       | 0.895 | 0.951 | 0.992 | 1.025 | 1.022 |    0.99  |
 
-### Table 10, does the gradient still beat GNNExplainer at a realistic budget?
+### Table 10. does the gradient still beat GNNExplainer at a realistic budget?
 
 | budget   | comparison           |   challenger lift |   gnnexpl lift |   mean precision margin | wins / ties / losses (%)   |   wilcoxon p |    n |
 |:---------|:---------------------|------------------:|---------------:|------------------------:|:---------------------------|-------------:|-----:|
