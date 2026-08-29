@@ -42,7 +42,11 @@ about whether the model found the collusion.
 ---
 
 ## 1. Findings
-This is the gap the repo exists to measure.
+This is the gap the repo exists to measure. Push camouflage to 2.0 and the GCN's
+node AUC only slides from 0.96 to 0.71, which still reads as a working model.
+Ring recovery over the same range goes from 78% to 2%. Four of the sixteen GCN
+cells sit above 0.70 AUC with ring recall below 0.20, and across all three model
+families it is 8 of 48.
 
 ![node AUC against ring recovery under camouflage](reports/figures/detection-vs-recovery.png)
 
@@ -52,11 +56,23 @@ This is the gap the repo exists to measure.
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#1-findings).
 ### What I did not find
-I did not find a bug in this harness.
+I did not find a bug in this harness, and I looked for the two I most expected.
+The id-ordering trap (F9) is real, but I built the generator that way on purpose
+and guarded it from the start, so it never corrupted a result. The other was
+tie-breaking: ring members hold the highest node ids, so a tied block ranked in
+index order would push ring edges to the back and bias faithfulness downward.
+That one did not happen, the gradient explainer's tie rate in float32 is 0.000
+and index-order against random tie-breaking give identical precision to three
+decimals on every topology.
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#what-i-did-not-find).
 ## 2. Results
 Left: even Integrated Gradients puts only 41% of its top edges inside the ring, and the random-edge expectation for the same neighbourhoods is 23%, so a raw precision number is mostly reporting neighbourhood density.
+Right: lift over that null climbs as camouflage goes up instead of falling.
+GNNExplainer moves from 1.3x at camouflage 0 to 2.4x at camouflage 2.0, and
+integrated gradients from 1.8x to 3.1x, peaking at 3.3x at camouflage 1.0. That
+happens because the null thins faster than the explainer degrades, so lift has to
+be read next to precision rather than instead of it.
 
 ![explainer precision against the random-edge null](reports/figures/faithfulness.png)
 
@@ -188,6 +204,11 @@ Full detail in [notes/METHODS.md](notes/METHODS.md#table-7-faithfulness-on-detec
 | k20 | ig vs gnnexplainer | 1.975 | 1.831 | 0.0086 | 35.0 / 39.2 / 25.7 | 2.23e-10 | 3989 |
 | oracle | ig vs gnnexplainer | 2.604 | 1.784 | 0.0637 | 47.1 / 24.4 / 28.6 | 7.46e-60 | 3989 |
 
+For the plain gradient the answer is no: its margin over GNNExplainer falls from
++0.072 at k=1 to -0.002 at k=10 (p = 0.72) and -0.004 at k=20. Integrated
+gradients holds its margin at every budget, +0.118 at k=1 down to +0.009 at k=20.
+A positive margin means the challenger beats GNNExplainer.
+
 Table 7 is paired by experimental cell, not by node: nodes inside one cell share a graph and a trained model, so pooling them would overstate n by two orders of magnitude.
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#table-10-does-the-gradient-still-beat-gnnexplainer-at-a-realistic-budget).
@@ -203,11 +224,25 @@ flatter, because the null tightens with it. The random explainer sits on 1.0
 throughout, which is the check on the null rather than a result.
 
 ## 3. What this is, and what it is not
-Ring-level ground truth for fraud graphs is not my idea.
+Ring-level ground truth for fraud graphs is not my idea. TravelFraudBench
+(arXiv:2604.21093) already plants rings in travel networks and reports ring-level
+recovery, GraphSAGE at 100% across their ring types against 17 to 88% for a
+tabular MLP, and LAS-GNN detects laundering motifs directly. What neither line
+asks is whether the explainer attached to the detector points at the ring. That
+edge-level layer, scored against the planted motif's own edges and against a
+random-edge null, is the only thing this repo adds.
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#3-what-this-is-and-what-it-is-not).
 ## 4. Method
-Camouflage acts on structure, so the ring's shape decides how long it survives.
+The generator plants disjoint rings of four shapes into a preferential-attachment
+background graph, and camouflage adds cover edges to legitimate nodes in
+proportion to a member's degree inside the motif. Because camouflage acts on
+structure, the ring's shape decides how long it survives: a clique is still 10%
+recovered at camouflage 2.0, while the star is at zero by camouflage 1.0 and the
+cycle is down to 3%. The second figure is the floor under all of it. A
+structure-blind MLP on the same features scores 0.515 to 0.555 AUC by topology
+and recovers no rings at all, so whatever a graph model scores above that is what
+the structure bought.
 
 ![ring recovery by topology](reports/figures/by-topology.png)
 ![the three models, including the feature-only control](reports/figures/model-comparison.png)
