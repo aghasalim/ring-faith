@@ -315,7 +315,7 @@ be made identically in all of them to survive.
 | [`verify/summaries.sql`](verify/summaries.sql) | both summary CSVs from the raw tables, 48 detection rows and 1512 faithfulness rows, means and sample standard deviations, in SQLite | max deviation 5.0e-05 on 15408 numbers, which is the rounding step of the 4 decimals published |
 | [`verify/kernel.c`](verify/kernel.c) | the per-row metric kernel over all 131136 rows: the null, the recall, the F1 and the lift, all re-derived from the three counts, columns resolved by name | exact, 0.0e+00 on every one of the four identities; Table 5 within 3.9e-05 |
 | [`verify/gocheck`](verify/gocheck) | the structure of every results file, the counts in `sweep_config.json`, Table 1, the ten tables pasted into this README, and the 27 numbers written into its prose | Table 1 within 4.7e-04; the tables and the prose numbers exact |
-| [`verify/verify.R`](verify/verify.R) | Table 6: three Pearson correlations, seven signed-rank tests written out rather than called, four Spearman pairs, plus a cluster bootstrap the repository does not have | correlations within 4.1e-04, the mean margin within 5.1e-06, p-values within 1.5% in log10 |
+| [`verify/verify.R`](verify/verify.R) | Table 6: three Pearson correlations, seven signed-rank tests written out rather than called, four Spearman pairs, plus a cluster bootstrap the repository does not have | correlations within 4.1e-04, the mean margin within 5.1e-06, p-values within 1.6% in log10 |
 | [`verify/nullcheck`](verify/nullcheck) | the analytic random-edge null, by drawing k of the n candidate edges without replacement 500 times for each of the 131136 rows, in Rust | every budget within 2.6 standard errors of the closed form; the random explainer within 1.9 |
 | [`verify/budget.mjs`](verify/budget.mjs) | Tables 8 and 9, the budget sweep on detected and on missed nodes, and Table 4 including both rank orderings, in Node | within 5.0e-04, ranks exact |
 | [`verify/tables37.rb`](verify/tables37.rb) | Table 3, the structure-blind baseline, and Table 7, the detected against missed split with its cell pairing, in Ruby | within 4.9e-04, every n and pairing count exact |
@@ -372,8 +372,9 @@ one unit in the last place away from a correctly rounded parse; reading with
 published table. What it does move is which paired differences count as exactly
 tied, 432 distinct absolute differences against 423, and the signed-rank tie
 correction is sensitive to that. That is why the Wilcoxon p-values in Table 6 and
-the ones R computes agree only to 1.5% in log10 rather than exactly, and it is
-not something I would have found without a second implementation.
+the ones R computes agree only to a relative 0.0146 in log10 here, and 0.0151 on
+the Linux runner, rather than exactly. It is not something I would have found
+without a second implementation.
 
 ## 7. Repository layout
 
