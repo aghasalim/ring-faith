@@ -8,3 +8,6 @@ dist/
 .DS_Store
 .env
 .env.local
+
+verify/.work/
+verify/*/target/

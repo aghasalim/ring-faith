@@ -27,7 +27,10 @@ figures:  ## redraw the README figures from reports/*.csv
 clean:  ## remove caches
 	rm -rf .pytest_cache **/__pycache__ src/*.egg-info
 
-.PHONY: help venv test sweep demo report all clean report-check
+.PHONY: help venv test sweep demo report all clean report-check verify
 
 report-check:  ## fail if reports/tables.md no longer matches the generator
 	$(PY) experiments/make_tables.py --check
+
+verify:  ## recompute every published table in the other languages under verify/
+	./verify/verify.sh

@@ -35,3 +35,48 @@ jobs:
       # These docs are generated. This fails if someone edits them by hand.
       - name: Generated docs still match
         run: python experiments/make_tables.py --check
+
+  verify:
+    name: differential verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # gcc, go, cargo, node, ruby and a JDK are already on the runner.
+      - name: Install the toolchains the runner does not have
+        run: |
+          missing=""
+          command -v Rscript >/dev/null 2>&1 || missing="$missing r-base-core"
+          command -v sqlite3 >/dev/null 2>&1 || missing="$missing sqlite3"
+          if [ -n "$missing" ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends $missing
+          fi
+
+      - name: Recompute every published table
+        run: |
+          set -o pipefail
+          ./verify/verify.sh | tee /tmp/verify.log
+          # A skipped check is a missing toolchain, not a pass. On CI they all run.
+          tail -1 /tmp/verify.log | grep -q '0 failed, 0 skipped' || {
+            echo "not every implementation ran on this runner"
+            exit 1
+          }
+
+      # A check that cannot fail is not evidence. Corrupt one measured AUC in
+      # the raw detection table, require the harness to reject it, put it back,
+      # and require it to pass again.
+      - name: The harness must reject a corrupted results file
+        run: |
+          set -e
+          sed -i '2s/0.9986111111111111/0.5000000000000000/' reports/detection_raw.csv
+          if git diff --quiet reports/detection_raw.csv; then
+            echo "the corruption changed nothing, so this proves nothing"
+            exit 1
+          fi
+          if ./verify/verify.sh; then
+            echo "the harness accepted a corrupted reports/detection_raw.csv"
+            exit 1
+          fi
+          git checkout -- reports/detection_raw.csv
+          ./verify/verify.sh
