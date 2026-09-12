@@ -63,7 +63,7 @@ jobs:
             exit 1
           }
 
-      # A check that cannot fail is not evidence. Corrupt one measured AUC in
+      # A check that cannot fail is not a check. Corrupt one measured AUC in
       # the raw detection table, require the harness to reject it, put it back,
       # and require it to pass again.
       - name: The harness must reject a corrupted results file
