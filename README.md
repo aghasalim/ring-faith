@@ -249,8 +249,7 @@ the structure bought.
 Full detail in [notes/METHODS.md](notes/METHODS.md#4-method).
 ## 5. Limitations
 
-Synthetic only. No real transaction graph. The generator is a controlled
-instrument for a specific question, not a claim about production data.
+Synthetic only. No real transaction graph. The generator is a controlled instrument for one specific question.
 
 Undirected, static, unattributed edges. Real fraud graphs are directed,
 timestamped and carry amounts. Motifs like scatter-gather are *defined* by
