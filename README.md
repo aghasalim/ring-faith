@@ -4,6 +4,7 @@
 
 [![ci](https://github.com/aghasalim/ring-faith/actions/workflows/ci.yml/badge.svg)](https://github.com/aghasalim/ring-faith/actions/workflows/ci.yml)
 [![licence](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23003670.svg)](https://doi.org/10.5281/zenodo.23003670)
 
 ---
 
