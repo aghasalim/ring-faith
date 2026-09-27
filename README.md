@@ -32,10 +32,10 @@ camouflage 0 to 2.4x at camouflage 2.0. Integrated Gradients goes from 1.8x to
 explainer degrades, which is why lift has to be read alongside precision rather
 than instead of it.
 
-**Contributions.** (i) A planted-ring benchmark where the structure to be
+Contributions. (i) A planted-ring benchmark where the structure to be
 explained is known by construction. (ii) An analytic random-edge null, with a
 random explainer that sits on lift 1.0 as the check on it. (iii) Measurement at
-realistic explanation budgets rather than only at an oracle budget that assumes
+realistic explanation budgets, not only at an oracle budget that assumes
 the ring size is known. (iv) Evidence that node AUC is close to uninformative
 about whether the model found the collusion.
 
@@ -221,7 +221,7 @@ first version of this repo measured at, and it is not available at inference tim
 knowing how big the ring is was the question. At the fixed budgets an investigator
 actually gets, raw precision climbs as the budget tightens while lift stays much
 flatter, because the null tightens with it. The random explainer sits on 1.0
-throughout, which is the check on the null rather than a result.
+throughout, which is the check on the null instead of a result.
 
 ## 3. What this is, and what it is not
 Ring-level ground truth for fraud graphs is not my idea. TravelFraudBench
@@ -250,43 +250,43 @@ the structure bought.
 Full detail in [notes/METHODS.md](notes/METHODS.md#4-method).
 ## 5. Limitations
 
-**Synthetic only.** No real transaction graph. The generator is a controlled
+Synthetic only. No real transaction graph. The generator is a controlled
 instrument for a specific question, not a claim about production data.
 
-**Undirected, static, unattributed edges.** Real fraud graphs are directed,
+Undirected, static, unattributed edges. Real fraud graphs are directed,
 timestamped and carry amounts. Motifs like scatter-gather are *defined* by
 direction and time; none of that is representable here.
 
-**One feature mechanism.** A single mean shift on one dimension. A different
+One feature mechanism. A single mean shift on one dimension. A different
 feature-signal design could move the detection numbers substantially.
 
-**Three explainers plus the null.** GNNExplainer, the plain gradient and
+Three explainers plus the null. GNNExplainer, the plain gradient and
 integrated gradients. Still no PGExplainer, no SubgraphX, no attention, and
 two of the three are gradient attributions that coincide exactly on
 GraphSAGE (F12), so the effective diversity is smaller than the count. A
 negative result for GNNExplainer is not a negative result for all explainers.
 
-**Homophily by construction.** Ring members share a feature shift *and* are
+Homophily by construction. Ring members share a feature shift *and* are
 densely connected, which is the regime GNNs are best in. Heterophilous fraud
 (a mule that looks exactly like its legitimate neighbours) is not covered.
 
-**The oracle budget flatters the plain gradient specifically.** `k` defaulting
+The oracle budget flatters the plain gradient specifically. `k` defaulting
 to the true number of motif edges is information no investigator has, and F5
 now reports what happens without it. What is still untested is the middle
 ground: a budget picked by a heuristic (a fraction of the candidate set, a
 score threshold) rather than either an oracle or a flat constant.
 
-**Missed nodes are explained with respect to the fraud class.** That is the
+Missed nodes are explained with respect to the fraud class. That is the
 operationally sensible choice and it makes the detected and missed groups
 comparable, but it is a choice. The other convention, explain whatever the
 model predicted, which on a missed node is "legitimate", is supported by the
 code (`target_class=None`) and was not run.
 
-**Faithfulness on missed nodes is measured per node, not per ring.** A node the
+Faithfulness on missed nodes is measured per node, not per ring. A node the
 model missed may still sit in a ring that was mostly recovered. Ring-level
 conditioning would be a different and probably sharper cut.
 
-**Small graphs.** Dense adjacency is `O(N²)`; everything here is under ~1.5k
+Small graphs. Dense adjacency is `O(N²)`; everything here is under ~1.5k
 nodes. Nothing about scaling is tested.
 
 ## 6. Reproducibility
