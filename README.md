@@ -250,36 +250,44 @@ the structure bought.
 Full detail in [notes/METHODS.md](notes/METHODS.md#4-method).
 ## 5. Limitations
 
-- **Synthetic only.** No real transaction graph. The generator is a controlled
-  instrument for a specific question, not a claim about production data.
-- **Undirected, static, unattributed edges.** Real fraud graphs are directed,
-  timestamped and carry amounts. Motifs like scatter-gather are *defined* by
-  direction and time; none of that is representable here.
-- **One feature mechanism.** A single mean shift on one dimension. A different
-  feature-signal design could move the detection numbers substantially.
-- **Three explainers plus the null.** GNNExplainer, the plain gradient and
-  integrated gradients. Still no PGExplainer, no SubgraphX, no attention, and
-  two of the three are gradient attributions that coincide exactly on
-  GraphSAGE (F12), so the effective diversity is smaller than the count. A
-  negative result for GNNExplainer is not a negative result for all explainers.
-- **Homophily by construction.** Ring members share a feature shift *and* are
-  densely connected, which is the regime GNNs are best in. Heterophilous fraud
-  (a mule that looks exactly like its legitimate neighbours) is not covered.
-- **The oracle budget flatters the plain gradient specifically.** `k` defaulting
-  to the true number of motif edges is information no investigator has, and F5
-  now reports what happens without it. What is still untested is the middle
-  ground: a budget picked by a heuristic (a fraction of the candidate set, a
-  score threshold) rather than either an oracle or a flat constant.
-- **Missed nodes are explained with respect to the fraud class.** That is the
-  operationally sensible choice and it makes the detected and missed groups
-  comparable, but it is a choice. The other convention, explain whatever the
-  model predicted, which on a missed node is "legitimate", is supported by the
-  code (`target_class=None`) and was not run.
-- **Faithfulness on missed nodes is measured per node, not per ring.** A node the
-  model missed may still sit in a ring that was mostly recovered. Ring-level
-  conditioning would be a different and probably sharper cut.
-- **Small graphs.** Dense adjacency is `O(N²)`; everything here is under ~1.5k
-  nodes. Nothing about scaling is tested.
+**Synthetic only.** No real transaction graph. The generator is a controlled
+instrument for a specific question, not a claim about production data.
+
+**Undirected, static, unattributed edges.** Real fraud graphs are directed,
+timestamped and carry amounts. Motifs like scatter-gather are *defined* by
+direction and time; none of that is representable here.
+
+**One feature mechanism.** A single mean shift on one dimension. A different
+feature-signal design could move the detection numbers substantially.
+
+**Three explainers plus the null.** GNNExplainer, the plain gradient and
+integrated gradients. Still no PGExplainer, no SubgraphX, no attention, and
+two of the three are gradient attributions that coincide exactly on
+GraphSAGE (F12), so the effective diversity is smaller than the count. A
+negative result for GNNExplainer is not a negative result for all explainers.
+
+**Homophily by construction.** Ring members share a feature shift *and* are
+densely connected, which is the regime GNNs are best in. Heterophilous fraud
+(a mule that looks exactly like its legitimate neighbours) is not covered.
+
+**The oracle budget flatters the plain gradient specifically.** `k` defaulting
+to the true number of motif edges is information no investigator has, and F5
+now reports what happens without it. What is still untested is the middle
+ground: a budget picked by a heuristic (a fraction of the candidate set, a
+score threshold) rather than either an oracle or a flat constant.
+
+**Missed nodes are explained with respect to the fraud class.** That is the
+operationally sensible choice and it makes the detected and missed groups
+comparable, but it is a choice. The other convention, explain whatever the
+model predicted, which on a missed node is "legitimate", is supported by the
+code (`target_class=None`) and was not run.
+
+**Faithfulness on missed nodes is measured per node, not per ring.** A node the
+model missed may still sit in a ring that was mostly recovered. Ring-level
+conditioning would be a different and probably sharper cut.
+
+**Small graphs.** Dense adjacency is `O(N²)`; everything here is under ~1.5k
+nodes. Nothing about scaling is tested.
 
 ## 6. Reproducibility
 
