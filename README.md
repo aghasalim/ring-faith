@@ -29,8 +29,7 @@ ring against a 23% random-edge expectation. Lift over that null *rises* with
 camouflage, at a rate that differs by explainer. GNNExplainer goes from 1.3x at
 camouflage 0 to 2.4x at camouflage 2.0. Integrated Gradients goes from 1.8x to
 3.1x, with its peak of 3.3x at camouflage 1.0. The null thins faster than the
-explainer degrades, which is why lift has to be read alongside precision rather
-than instead of it.
+explainer degrades, which is why lift has to be read alongside precision.
 
 Contributions. (i) A planted-ring benchmark where the structure to be
 explained is known by construction. (ii) An analytic random-edge null, with a
@@ -68,11 +67,11 @@ decimals on every topology.
 Full detail in [notes/METHODS.md](notes/METHODS.md#what-i-did-not-find).
 ## 2. Results
 Left: even Integrated Gradients puts only 41% of its top edges inside the ring, and the random-edge expectation for the same neighbourhoods is 23%, so a raw precision number is mostly reporting neighbourhood density.
-Right: lift over that null climbs as camouflage goes up instead of falling.
+Right: lift over that null climbs as camouflage goes up.
 GNNExplainer moves from 1.3x at camouflage 0 to 2.4x at camouflage 2.0, and
 integrated gradients from 1.8x to 3.1x, peaking at 3.3x at camouflage 1.0. That
 happens because the null thins faster than the explainer degrades, so lift has to
-be read next to precision rather than instead of it.
+be read next to precision.
 
 ![explainer precision against the random-edge null](reports/figures/faithfulness.png)
 
@@ -221,7 +220,7 @@ first version of this repo measured at, and it is not available at inference tim
 knowing how big the ring is was the question. At the fixed budgets an investigator
 actually gets, raw precision climbs as the budget tightens while lift stays much
 flatter, because the null tightens with it. The random explainer sits on 1.0
-throughout, which is the check on the null instead of a result.
+throughout, which is a check on the null and nothing more.
 
 ## 3. What this is, and what it is not
 Ring-level ground truth for fraud graphs is not my idea. TravelFraudBench
@@ -274,7 +273,7 @@ The oracle budget flatters the plain gradient specifically. `k` defaulting
 to the true number of motif edges is information no investigator has, and F5
 now reports what happens without it. What is still untested is the middle
 ground: a budget picked by a heuristic (a fraction of the candidate set, a
-score threshold) rather than either an oracle or a flat constant.
+score threshold) somewhere between an oracle and a flat constant.
 
 Missed nodes are explained with respect to the fraud class. That is the
 operationally sensible choice and it makes the detected and missed groups
