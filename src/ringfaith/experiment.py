@@ -67,7 +67,9 @@ def run_config(
                 **base,
                 "model": name,
                 **node_metrics(g.y[te], scores[te]),
-                "ring_recall": ring_recall(g.y, g.ring_id, scores),
+                # Test nodes only, like AUC and AP: 60% of the ring members
+                # were training labels, and recovering those proves nothing.
+                "ring_recall": ring_recall(g.y[te], g.ring_id[te], scores[te], seed=seed),
             }
         )
         if name == "mlp":

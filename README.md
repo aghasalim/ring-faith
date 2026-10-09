@@ -24,7 +24,7 @@ Across 80 configurations, 4 ring topologies x 4 camouflage levels x 5 seeds, 240
 trained models, 4 explainers, 6 budgets, 131,136 faithfulness measurements, the
 headline metric and the useful one come apart sharply. At camouflage 2.0 a GCN
 still scores 0.71 AUC, which reads as a working model, while ring recovery has
-fallen from 78% to 2%. Explanation faithfulness never gets far off the floor:
+fallen from 59% to 3.5%. Explanation faithfulness never gets far off the floor:
 Integrated Gradients, the best of the four, puts 41% of its top edges inside the
 ring against a 23% random-edge expectation. Lift over that null *rises* with
 camouflage, at a rate that differs by explainer. GNNExplainer goes from 1.3x at
@@ -44,9 +44,11 @@ about whether the model found the collusion.
 ## 1. Findings
 This is the gap the repo exists to measure. Push camouflage to 2.0 and the GCN's
 node AUC only slides from 0.96 to 0.71, which still reads as a working model.
-Ring recovery over the same range goes from 78% to 2%. Four of the sixteen GCN
+Ring recovery over the same range goes from 59% to 3.5%. Five of the sixteen GCN
 cells sit above 0.70 AUC with ring recall below 0.20, and across all three model
-families it is 8 of 48.
+families it is 11 of 48. Ring recall is scored on the held-out test nodes,
+the same ones as AUC; an earlier version scored it on every node, including the
+60% the model was trained on, which put the camouflage 0 figure at 78%.
 
 ![node AUC against ring recovery under camouflage](reports/figures/detection-vs-recovery.png)
 
@@ -80,21 +82,21 @@ The full breakdown sits at [notes/METHODS.md](notes/METHODS.md#2-results).
 ### Table 1, GCN: detection vs explanation faithfulness
 | topology | camouflage | node AUC | ring recall | GNNExpl precision | random null | lift over null | candidate edges | nodes explained |
 |:-----------|-------------:|-----------:|--------------:|--------------------:|--------------:|-----------------:|------------------:|------------------:|
-| bipartite | 0 | 0.996 | 0.9 | 0.61 | 0.545 | 1.238 | 34 | 125 |
-| bipartite | 0.5 | 0.95 | 0.567 | 0.366 | 0.253 | 1.621 | 73.072 | 125 |
-| bipartite | 1 | 0.833 | 0.167 | 0.273 | 0.148 | 2.071 | 126.416 | 125 |
-| bipartite | 2 | 0.729 | 0 | 0.197 | 0.086 | 2.345 | 243.568 | 125 |
-| clique | 0 | 0.999 | 1 | 0.66 | 0.611 | 1.127 | 49.304 | 125 |
-| clique | 0.5 | 0.97 | 0.667 | 0.352 | 0.187 | 1.994 | 165.608 | 125 |
-| clique | 1 | 0.903 | 0.4 | 0.325 | 0.128 | 2.592 | 274.712 | 125 |
+| bipartite | 0 | 0.996 | 0.723 | 0.61 | 0.545 | 1.238 | 34 | 125 |
+| bipartite | 0.5 | 0.95 | 0.46 | 0.366 | 0.253 | 1.621 | 73.072 | 125 |
+| bipartite | 1 | 0.833 | 0.13 | 0.273 | 0.148 | 2.071 | 126.416 | 125 |
+| bipartite | 2 | 0.729 | 0.04 | 0.197 | 0.086 | 2.345 | 243.568 | 125 |
+| clique | 0 | 0.999 | 0.91 | 0.66 | 0.611 | 1.127 | 49.304 | 125 |
+| clique | 0.5 | 0.97 | 0.537 | 0.352 | 0.187 | 1.994 | 165.608 | 125 |
+| clique | 1 | 0.903 | 0.18 | 0.325 | 0.128 | 2.592 | 274.712 | 125 |
 | clique | 2 | 0.881 | 0.1 | 0.144 | 0.104 | 1.434 | 626.848 | 125 |
-| cycle | 0 | 0.949 | 0.733 | 0.357 | 0.287 | 1.806 | 21.264 | 125 |
-| cycle | 0.5 | 0.871 | 0.333 | 0.186 | 0.148 | 1.485 | 37.376 | 125 |
-| cycle | 1 | 0.679 | 0.033 | 0.099 | 0.099 | 0.985 | 52.72 | 125 |
+| cycle | 0 | 0.949 | 0.443 | 0.357 | 0.287 | 1.806 | 21.264 | 125 |
+| cycle | 0.5 | 0.871 | 0.213 | 0.186 | 0.148 | 1.485 | 37.376 | 125 |
+| cycle | 1 | 0.679 | 0.04 | 0.099 | 0.099 | 0.985 | 52.72 | 125 |
 | cycle | 2 | 0.65 | 0 | 0.101 | 0.054 | 2.18 | 94.816 | 125 |
-| star | 0 | 0.915 | 0.5 | 0.448 | 0.415 | 1.13 | 23.024 | 125 |
-| star | 0.5 | 0.82 | 0.167 | 0.299 | 0.294 | 1.037 | 34.512 | 125 |
-| star | 1 | 0.69 | 0 | 0.242 | 0.175 | 1.53 | 60.784 | 125 |
+| star | 0 | 0.915 | 0.287 | 0.448 | 0.415 | 1.13 | 23.024 | 125 |
+| star | 0.5 | 0.82 | 0.18 | 0.299 | 0.294 | 1.037 | 34.512 | 125 |
+| star | 1 | 0.69 | 0.04 | 0.242 | 0.175 | 1.53 | 60.784 | 125 |
 | star | 2 | 0.596 | 0 | 0.174 | 0.109 | 2.048 | 87.112 | 125 |
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#table-1-gcn-detection-vs-explanation-faithfulness).
@@ -117,10 +119,10 @@ Full detail in [notes/METHODS.md](notes/METHODS.md#table-2-explainers-pooled-ove
 
 | topology   |   auc (gcn) |   auc (mlp) |   auc (sage) |   ring_recall (gcn) |   ring_recall (mlp) |   ring_recall (sage) |
 |:-----------|------------:|------------:|-------------:|--------------------:|--------------------:|---------------------:|
-| bipartite  |       0.877 |       0.515 |        0.684 |               0.408 |                   0 |                0.15  |
-| clique     |       0.938 |       0.555 |        0.803 |               0.542 |                   0 |                0.275 |
-| cycle      |       0.787 |       0.542 |        0.619 |               0.275 |                   0 |                0.05  |
-| star       |       0.755 |       0.518 |        0.687 |               0.167 |                   0 |                0.092 |
+| bipartite  |       0.877 |       0.515 |        0.684 |               0.338 |               0     |                0.051 |
+| clique     |       0.938 |       0.555 |        0.803 |               0.432 |               0.017 |                0.23  |
+| cycle      |       0.787 |       0.542 |        0.619 |               0.174 |               0.02  |                0.058 |
+| star       |       0.755 |       0.518 |        0.687 |               0.127 |               0.018 |                0.117 |
 
 ### Table 4, the dissociation (averaged over camouflage)
 
@@ -238,10 +240,10 @@ The generator plants disjoint rings of four shapes into a preferential-attachmen
 background graph, and camouflage adds cover edges to legitimate nodes in
 proportion to a member's degree inside the motif. Because camouflage acts on
 structure, the ring's shape decides how long it survives: a clique is still 10%
-recovered at camouflage 2.0, while the star is at zero by camouflage 1.0 and the
-cycle is down to 3%. The second figure is the floor under all of it. A
+recovered at camouflage 2.0, while the star and the cycle are down to 4% and
+4% by camouflage 1.0. The second figure is the floor under all of it. A
 structure-blind MLP on the same features scores 0.515 to 0.555 AUC by topology
-and recovers no rings at all, so whatever a graph model scores above that is what
+and recovers almost no rings, 1.4% on average, so whatever a graph model scores above that is what
 the structure bought.
 
 ![ring recovery by topology](reports/figures/by-topology.png)
