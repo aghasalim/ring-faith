@@ -13,18 +13,25 @@ def node_metrics(y: np.ndarray, scores: np.ndarray) -> dict:
     return {"auc": float(roc_auc_score(y, scores)), "ap": float(average_precision_score(y, scores))}
 
 
-def ring_recall(y: np.ndarray, ring_id: np.ndarray, scores: np.ndarray, frac: float = 0.8) -> float:
+def ring_recall(
+    y: np.ndarray, ring_id: np.ndarray, scores: np.ndarray, frac: float = 0.8, seed: int = 0
+) -> float:
     """Fraction of planted rings with >= `frac` of members inside the top-K nodes.
 
     K is the true number of fraud nodes. The >=80% definition follows
     TravelFraudBench (arXiv:2604.21093); ring-level recovery is their idea, not
     a contribution of this repo.
+
+    Pass only held-out nodes. A ring is judged on its members in that set, and a
+    ring with no member there is left out rather than counted as missed. Ties in
+    the score are broken at random through `_rank_desc`: ring members hold the
+    highest node ids, so breaking them by id would rank ring members last.
     """
     k = int(y.sum())
     if k == 0:
         return float("nan")
     flagged = np.zeros(len(y), dtype=bool)
-    flagged[np.argsort(-scores, kind="stable")[:k]] = True
+    flagged[_rank_desc(np.asarray(scores, dtype=float), np.random.default_rng(seed))[:k]] = True
     rings = [r for r in np.unique(ring_id) if r >= 0]
     if not rings:
         return float("nan")

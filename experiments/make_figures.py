@@ -178,8 +178,8 @@ def by_topology(out: Path) -> Path:
     """Ring recovery per ring shape, which is what camouflage acts on.
 
     A clique of colluders is a dense subgraph and survives longest, still 10%
-    recovered at camouflage 2.0 where every other shape is at zero. Star and cycle
-    are the sparsest and are gone by camouflage 1.0. Averaging over topologies, as
+    recovered at camouflage 2.0. Star and cycle are the sparsest and are down to
+    4% by camouflage 1.0. Averaging over topologies, as
     the headline figure does, hides a spread that wide.
     """
     table = _load("detection_summary.csv", DETECTION_COLUMNS)
@@ -200,7 +200,7 @@ def by_topology(out: Path) -> Path:
         ax.set_ylim(-0.03, 1.05)
     titled(left, "Every ring shape keeps a node AUC that reads as working",
            "GCN, mean of 5 seeds per point")
-    titled(right, "Only the dense clique is still recoverable at camouflage 2.0",
+    titled(right, "The dense clique holds out longest under camouflage",
            "the same runs, scored on whether the planted ring was surfaced")
     left.legend(loc="lower left", title="ring topology", title_fontsize=9)
 
@@ -227,7 +227,7 @@ def model_comparison(out: Path) -> Path:
          "Average precision falls faster than AUC",
          "the ranking degrades faster than AUC admits"),
         ("ring_recall", "rings recovered (fraction of planted rings)",
-         "The MLP never recovers a single ring",
+         "The MLP recovers almost no rings",
          "the same runs, scored on the planted rings"),
     ]
 

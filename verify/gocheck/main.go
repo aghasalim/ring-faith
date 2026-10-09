@@ -335,9 +335,9 @@ func checkProse(root string, det, fai *table) int {
 			[]float64{gnnLift["0.0"], gnnLift["2.0"], igLift["0.0"], igLift["2.0"],
 				igLift["1.0"]}},
 		{`a clique is still ([0-9.]+)% recovered at camouflage 2.0, while the star ` +
-			`is at zero by camouflage 1.0 and the cycle is down to ([0-9.]+)%`,
-			[]float64{100 * gcnRingByCell["clique 2.0"], 100 * gcnRingByCell["cycle 1.0"],
-				100 * gcnRingByCell["star 1.0"]}},
+			`and the cycle are down to ([0-9.]+)% and ([0-9.]+)% by camouflage 1.0`,
+			[]float64{100 * gcnRingByCell["clique 2.0"], 100 * gcnRingByCell["star 1.0"],
+				100 * gcnRingByCell["cycle 1.0"]}},
 		{`structure-blind MLP on the same features scores ([0-9.]+) to ([0-9.]+) AUC ` +
 			`by topology`, nil},
 	}

@@ -69,6 +69,36 @@ def test_ring_recall_endpoints_and_threshold():
     assert ring_recall(g.y, g.ring_id, s) == pytest.approx(1 / SMALL["n_rings"])
 
 
+def test_ring_recall_breaks_ties_at_random_not_by_node_id():
+    """Ring members hold the highest ids. With id-order tie-breaking a constant
+    score puts every background node first and recovers no ring, ever."""
+    y = np.r_[np.zeros(8, dtype=int), np.ones(2, dtype=int)]
+    ring_id = np.r_[np.full(8, -1), 0, 1]
+    tied = np.ones(10)
+    r = [ring_recall(y, ring_id, tied, seed=t) for t in range(2000)]
+    # K = 2 of 10 tied nodes, so each one-member ring is in the top K w.p. 0.2.
+    assert np.mean(r) == pytest.approx(0.2, abs=0.03)
+
+
+def test_run_config_scores_ring_recall_on_test_nodes_only(monkeypatch):
+    """AUC and AP are on test nodes; ring recall used to be on every node,
+    including the 60% the model was trained on."""
+    from ringfaith import experiment
+
+    seen = []
+    real = experiment.ring_recall
+
+    def spy(y, ring_id, scores, **kw):
+        seen.append(len(y))
+        return real(y, ring_id, scores, **kw)
+
+    monkeypatch.setattr(experiment, "ring_recall", spy)
+    g = generate(topology="clique", seed=0, **SMALL)
+    _, _, te = stratified_split(g.y, seed=0)
+    experiment.run_config("clique", 0.0, seed=0, models=("mlp",), n_explain=0, gen_kwargs=SMALL)
+    assert seen == [len(te)]
+
+
 # --- faithfulness and the null ----------------------------------------------
 
 def test_faithfulness_endpoints():
