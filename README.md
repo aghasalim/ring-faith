@@ -10,75 +10,77 @@
 
 ## Abstract
 
-Fraud-detection GNNs are reported by node-level AUC. An investigator does not act
-on a score, though, they act on the explained structure, the handful of edges an
-explainer says mattered. This work measures how far those two things drift apart,
-separating three quantities that are usually conflated: node detection (AUC and
-average precision), ring recovery (was the planted collusion ring surfaced at
-all), and explanation faithfulness (do the explainer's top edges recover the
-ring's own edges). The first two are prior art; the third is the contribution,
-together with the random-edge null that any faithfulness number has to be read
+Fraud-detection GNNs usually get reported by node-level AUC. But an investigator
+doesn't act on a score. They act on the explanation, the handful of edges an
+explainer says mattered. I wanted to measure how far those two drift apart. So I
+kept apart three things that usually get lumped together. Node detection is AUC
+and average precision. Ring recovery asks whether the planted collusion ring
+showed up at all. Explanation faithfulness asks whether the explainer's top edges
+recover the ring's own edges. The first two are prior art. The third is what I
+add, along with the random-edge null that any faithfulness number has to be read
 against.
 
-Across 80 configurations, 4 ring topologies x 4 camouflage levels x 5 seeds, 240
-trained models, 4 explainers, 6 budgets, 131,136 faithfulness measurements, the
-headline metric and the useful one come apart sharply. At camouflage 2.0 a GCN
+I ran 80 configurations. That's 4 ring topologies by 4 camouflage levels, and
+each pair gets 5 seeds. In total I trained 240 models. Each one gets 4
+explainers, run at 6 budgets. That adds up to 131,136 faithfulness measurements.
+The headline metric and the useful one end up far apart. At camouflage 2.0 a GCN
 still scores 0.71 AUC, which reads as a working model, while ring recovery has
-fallen from 59% to 3.5%. Explanation faithfulness never gets far off the floor:
-Integrated Gradients, the best of the four, puts 41% of its top edges inside the
-ring against a 23% random-edge expectation. Lift over that null *rises* with
-camouflage, at a rate that differs by explainer. GNNExplainer goes from 1.3x at
-camouflage 0 to 2.4x at camouflage 2.0. Integrated Gradients goes from 1.8x to
-3.1x, with its peak of 3.3x at camouflage 1.0. The null thins faster than the
-explainer degrades, which is why lift has to be read alongside precision.
+fallen from 59% to 3.5%. Explanation faithfulness never gets far off the floor.
+Integrated Gradients is the best of the four, and it puts 41% of its top edges
+inside the ring against a 23% random-edge expectation. Oddly, lift over that
+null goes up with camouflage, and how fast depends on the explainer.
+GNNExplainer goes from 1.3x at camouflage 0 to 2.4x at camouflage 2.0.
+Integrated Gradients goes from 1.8x to 3.1x, with its peak of 3.3x at
+camouflage 1.0. That's because the null thins out faster than the explainer
+degrades. So lift only makes sense read next to precision.
 
-Contributions. (i) A planted-ring benchmark where the structure to be
-explained is known by construction. (ii) An analytic random-edge null, with a
-random explainer that sits on lift 1.0 as the check on it. (iii) Measurement at
-realistic explanation budgets, not only at an oracle budget that assumes
-the ring size is known. (iv) Evidence that node AUC is close to uninformative
-about whether the model found the collusion.
+What I'm contributing. (i) A planted-ring benchmark where I know the structure to
+be explained by construction. (ii) An analytic random-edge null, checked by a
+random explainer that sits on lift 1.0. (iii) Measurements at realistic
+explanation budgets as well as at an oracle budget, which assumes you already
+know the ring size. (iv) Evidence that node AUC tells you close to nothing about
+whether the model found the collusion.
 
 ---
 
 ## 1. Findings
-This is the gap the repo exists to measure. Push camouflage to 2.0 and the GCN's
-node AUC only slides from 0.96 to 0.71, which still reads as a working model.
-Ring recovery over the same range goes from 59% to 3.5%. Five of the sixteen GCN
+Here's the gap I built this repo to measure. If I push camouflage to 2.0, the
+GCN's node AUC only slides from 0.96 to 0.71, which still looks like a working
+model. Ring recovery over the same range goes from 59% to 3.5%. Five of the sixteen GCN
 cells sit above 0.70 AUC with ring recall below 0.20, and across all three model
-families it is 11 of 48. Ring recall is scored on the held-out test nodes,
-the same ones as AUC; an earlier version scored it on every node, including the
-60% the model was trained on, which put the camouflage 0 figure at 78%.
+families it is 11 of 48. I score ring recall on the held-out test nodes, the
+same ones AUC uses. An earlier version scored it on every node, including the
+60% the model was trained on. That put the camouflage 0 figure at 78%.
 
 ![node AUC against ring recovery under camouflage](reports/figures/detection-vs-recovery.png)
 
 ![the same runs animated across the four measured camouflage levels](reports/figures/camouflage-sweep.gif)
 
-*Four measured camouflage levels, one model, the same topologies and seeds throughout. Watch node AUC hold its ground while ring recovery falls away from it.*
+*This is one model across the four measured camouflage levels, with the same topologies and seeds in every frame. Node AUC holds steady while ring recovery drops away.*
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#1-findings).
 ### What I did not find
-I did not find a bug in this harness, and I looked for the two I most expected.
-The id-ordering trap (F9) is real, but I built the generator that way on purpose
-and guarded it from the start, so it never corrupted a result. The other was
-tie-breaking: ring members hold the highest node ids, so a tied block ranked in
-index order would push ring edges to the back and bias faithfulness downward.
-That one did not happen, the gradient explainer's tie rate in float32 is 0.000
-and index-order against random tie-breaking give identical precision to three
-decimals on every topology.
+I didn't find a bug in this harness. I looked hard for the two I expected most.
+The id-ordering trap (F9) is real. I built the generator that way on purpose,
+though, and guarded against it from the start, so it never corrupted a result.
+The other was tie-breaking. Ring members hold the highest node ids. If a tied
+block got ranked in index order, ring edges would go to the back and
+faithfulness would be biased downward. That didn't happen either. The gradient
+explainer's tie rate in float32 is 0.000. Index-order and random tie-breaking
+give identical precision to three decimals on every topology.
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#what-i-did-not-find).
 ## 2. Results
-Left: even Integrated Gradients puts only 41% of its top edges inside the ring, and the random-edge expectation for the same neighbourhoods is 23%, so a raw precision number is mostly reporting neighbourhood density.
+Left: even Integrated Gradients puts only 41% of its top edges inside the ring, and the random-edge expectation for the same neighbourhoods is 23%. So a raw precision number mostly reflects how dense the neighbourhood is.
 Right: lift over that null climbs as camouflage goes up.
 GNNExplainer moves from 1.3x at camouflage 0 to 2.4x at camouflage 2.0, and
-integrated gradients from 1.8x to 3.1x, peaking at 3.3x at camouflage 1.0. That
-happens because the null thins faster than the explainer degrades, so lift has to
-be read next to precision.
+integrated gradients from 1.8x to 3.1x, peaking at 3.3x at camouflage 1.0. It
+happens because the null thins out faster than the explainer gets worse. That's
+why I read lift next to precision.
 
 ![explainer precision against the random-edge null](reports/figures/faithfulness.png)
 
-The full breakdown sits at [notes/METHODS.md](notes/METHODS.md#2-results).
+The full breakdown is in [notes/METHODS.md](notes/METHODS.md#2-results).
 ### Table 1, GCN: detection vs explanation faithfulness
 | topology | camouflage | node AUC | ring recall | GNNExpl precision | random null | lift over null | candidate edges | nodes explained |
 |:-----------|-------------:|-----------:|--------------:|--------------------:|--------------:|-----------------:|------------------:|------------------:|
@@ -112,7 +114,7 @@ Full detail in [notes/METHODS.md](notes/METHODS.md#table-1-gcn-detection-vs-expl
 | sage | ig | 0.389 | 0.204 | 0.232 | 0.188 | 2.642 | 2.706 |
 | sage | random | 0.233 | 0.217 | 0.232 | 0.188 | 1.001 | 0.909 |
 
-`sage grad` and `sage ig` are identical to every decimal because on a mean-aggregating model they are the same estimator, see F12.
+`sage grad` and `sage ig` match to every decimal. On a mean-aggregating model they're the same estimator (see F12).
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#table-2-explainers-pooled-over-all-cells).
 ### Table 3, structure-blind baseline
@@ -206,45 +208,45 @@ Full detail in [notes/METHODS.md](notes/METHODS.md#table-7-faithfulness-on-detec
 | k20 | ig vs gnnexplainer | 1.975 | 1.831 | 0.0086 | 35.0 / 39.2 / 25.7 | 2.23e-10 | 3989 |
 | oracle | ig vs gnnexplainer | 2.604 | 1.784 | 0.0637 | 47.1 / 24.4 / 28.6 | 7.46e-60 | 3989 |
 
-For the plain gradient the answer is no: its margin over GNNExplainer falls from
-+0.072 at k=1 to -0.002 at k=10 (p = 0.72) and -0.004 at k=20. Integrated
-gradients holds its margin at every budget, +0.118 at k=1 down to +0.009 at k=20.
-A positive margin means the challenger beats GNNExplainer.
+For the plain gradient, no. Its margin over GNNExplainer is +0.072 at k=1.
+By k=10 it's down to -0.002 (p = 0.72), and at k=20 it's -0.004. Integrated
+gradients keeps a margin at every budget. At k=1 it's +0.118, and at k=20 it's
+still +0.009. A positive margin means the challenger beats GNNExplainer.
 
-Table 7 is paired by experimental cell, not by node: nodes inside one cell share a graph and a trained model, so pooling them would overstate n by two orders of magnitude.
+Table 7 is paired by experimental cell. Nodes inside one cell share a graph and a trained model, so pooling them would overstate n by two orders of magnitude.
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#table-10-does-the-gradient-still-beat-gnnexplainer-at-a-realistic-budget).
 ### 2.1 Does the budget change the answer?
 
 ![faithfulness against explanation budget](reports/figures/budget-sensitivity.png)
 
-`oracle` hands the explainer the true number of ring edges. That is the budget the
-first version of this repo measured at, and it is not available at inference time
-knowing how big the ring is was the question. At the fixed budgets an investigator
-actually gets, raw precision climbs as the budget tightens while lift stays much
-flatter, because the null tightens with it. The random explainer sits on 1.0
-throughout, which is a check on the null and nothing more.
+`oracle` hands the explainer the true number of ring edges. The first version of
+this repo measured at that budget. You don't get it at inference time, since
+knowing how big the ring is was the whole question. At the fixed budgets an
+investigator actually gets, raw precision climbs as the budget tightens. Lift
+stays much flatter, because the null tightens too. The random explainer sits on
+1.0 the whole way. That only checks the null.
 
 ## 3. What this is, and what it is not
-Ring-level ground truth for fraud graphs is not my idea. TravelFraudBench
+Ring-level ground truth for fraud graphs isn't my idea. TravelFraudBench
 (arXiv:2604.21093) already plants rings in travel networks and reports ring-level
-recovery, GraphSAGE at 100% across their ring types against 17 to 88% for a
-tabular MLP, and LAS-GNN detects laundering motifs directly. What neither line
-asks is whether the explainer attached to the detector points at the ring. That
-edge-level layer, scored against the planted motif's own edges and against a
-random-edge null, is the only thing this repo adds.
+recovery. GraphSAGE hits 100% across their ring types. A tabular MLP gets 17 to
+88%. LAS-GNN detects laundering motifs directly. Neither of them asks whether the
+explainer attached to the detector points at the ring. That's the only thing I
+add here. It's an edge-level layer, scored against the planted motif's own edges
+and against a random-edge null.
 
 Full detail in [notes/METHODS.md](notes/METHODS.md#3-what-this-is-and-what-it-is-not).
 ## 4. Method
-The generator plants disjoint rings of four shapes into a preferential-attachment
-background graph, and camouflage adds cover edges to legitimate nodes in
-proportion to a member's degree inside the motif. Because camouflage acts on
-structure, the ring's shape decides how long it survives: a clique is still 10%
+My generator plants disjoint rings of four shapes into a preferential-attachment
+background graph. Camouflage then adds cover edges to legitimate nodes, in
+proportion to a member's degree inside the motif. Camouflage acts on structure,
+so the ring's shape decides how long it lasts. In my runs a clique is still 10%
 recovered at camouflage 2.0, while the star and the cycle are down to 4% and
-4% by camouflage 1.0. The second figure is the floor under all of it. A
-structure-blind MLP on the same features scores 0.515 to 0.555 AUC by topology
-and recovers almost no rings, 1.4% on average, so whatever a graph model scores above that is what
-the structure bought.
+4% by camouflage 1.0. The second figure shows the floor under all of this. A
+structure-blind MLP on the same features scores 0.515 to 0.555 AUC by topology.
+It recovers almost no rings, 1.4% on average. So anything a graph model scores
+above that comes from the structure.
 
 ![ring recovery by topology](reports/figures/by-topology.png)
 ![the three models, including the feature-only control](reports/figures/model-comparison.png)
@@ -252,43 +254,44 @@ the structure bought.
 Full detail in [notes/METHODS.md](notes/METHODS.md#4-method).
 ## 5. Limitations
 
-Synthetic only. No real transaction graph. The generator is a controlled instrument for one specific question.
+Synthetic only. There's no real transaction graph. I built the generator as a
+controlled instrument for one specific question.
 
-Undirected, static, unattributed edges. Real fraud graphs are directed,
-timestamped and carry amounts. Motifs like scatter-gather are *defined* by
-direction and time; none of that is representable here.
+The edges are plain. Mine are undirected and static, with no attributes. Real
+fraud graphs are directed and timestamped, and they carry amounts. Motifs like
+scatter-gather are defined by direction and time, so I can't represent them here.
 
-One feature mechanism. A single mean shift on one dimension. A different
-feature-signal design could move the detection numbers substantially.
+There's one feature mechanism, a single mean shift on one dimension. A different
+feature-signal design could move the detection numbers a lot.
 
-Three explainers plus the null. GNNExplainer, the plain gradient and
-integrated gradients. Still no PGExplainer, no SubgraphX, no attention, and
-two of the three are gradient attributions that coincide exactly on
-GraphSAGE (F12), so the effective diversity is smaller than the count. A
-negative result for GNNExplainer is not a negative result for all explainers.
+I only have three explainers plus the null. They're GNNExplainer, the plain
+gradient and integrated gradients. I haven't run PGExplainer, SubgraphX or
+attention. Two of the three are gradient attributions that coincide exactly on
+GraphSAGE (F12), so there's less real variety than the count suggests. A
+negative result for GNNExplainer doesn't carry over to all explainers.
 
-Homophily by construction. Ring members share a feature shift *and* are
-densely connected, which is the regime GNNs are best in. Heterophilous fraud
-(a mule that looks exactly like its legitimate neighbours) is not covered.
+Homophily is built in. Ring members share a feature shift and are also densely
+connected, which is where GNNs do best. I don't cover heterophilous fraud, like a
+mule that looks exactly like its legitimate neighbours.
 
-The oracle budget flatters the plain gradient specifically. `k` defaulting
-to the true number of motif edges is information no investigator has, and F5
-now reports what happens without it. What is still untested is the middle
-ground: a budget picked by a heuristic (a fraction of the candidate set, a
-score threshold) somewhere between an oracle and a flat constant.
+The oracle budget flatters the plain gradient in particular. By default `k` is
+the true number of motif edges, and no investigator has that. F5 now reports
+what happens without it. I still haven't tested the middle ground, a budget
+picked by a heuristic (a fraction of the candidate set, or a score threshold)
+that sits between an oracle and a flat constant.
 
-Missed nodes are explained with respect to the fraud class. That is the
-operationally sensible choice and it makes the detected and missed groups
-comparable, but it is a choice. The other convention, explain whatever the
-model predicted, which on a missed node is "legitimate", is supported by the
-code (`target_class=None`) and was not run.
+I explain missed nodes with respect to the fraud class. That's the sensible
+choice operationally, and it keeps the detected and missed groups comparable,
+but it's still a choice. The other convention is to explain whatever the model
+predicted, which on a missed node is "legitimate". The code supports it
+(`target_class=None`), but I didn't run it.
 
-Faithfulness on missed nodes is measured per node, not per ring. A node the
-model missed may still sit in a ring that was mostly recovered. Ring-level
-conditioning would be a different and probably sharper cut.
+I measure faithfulness on missed nodes per node, not per ring. A node the model
+missed may still sit in a ring that was mostly recovered. Conditioning at the
+ring level would be a different cut, and probably a sharper one.
 
-Small graphs. Dense adjacency is `O(N²)`; everything here is under ~1.5k
-nodes. Nothing about scaling is tested.
+The graphs are small. Dense adjacency is `O(N²)`, and everything here is under
+~1.5k nodes. I haven't tested scaling at all.
 
 ## 6. Reproducibility
 
@@ -300,12 +303,11 @@ make demo     # the degenerate-split finding
 make report   # rebuild the tables in this README from reports/*.csv
 ```
 
-Every table above is regenerated by `experiments/make_tables.py` from the CSVs
-in `reports/`, which are written by `experiments/run_sweep.py`. The numbers in
-the prose around them were typed by hand, which is exactly the step that rots, so `verify/`
+`experiments/make_tables.py` regenerates every table above from the CSVs in
+`reports/`, and `experiments/run_sweep.py` writes those CSVs. I typed the numbers
+in the prose by hand, though, and that's the step that tends to rot. So `verify/`
 re-derives every published figure straight from the raw tables in SQL, C, Go, R,
-Rust, Node, Ruby and Java. A typo in this document and a green build are
-mutually exclusive.
+Rust, Node, Ruby and Java. If there's a typo in this README, the build goes red.
 
 ## 7. Repository layout
 
@@ -327,7 +329,7 @@ verify/         the same tables recomputed in SQL, C, Go, R, Rust, Node, Ruby
 
 ## 8. References
 
-Verified to exist at the time of writing; anything I could not resolve was left out.
+I checked that each of these exists at the time of writing. I left out anything I couldn't resolve.
 
 - Sajja. *TravelFraudBench: A Configurable Evaluation Framework for GNN Fraud
   Ring Detection in Travel Networks.* arXiv:2604.21093, 2026.
