@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/banner.jpg" alt="Line drawing of a sparse graph with one closed ring of nodes highlighted" width="100%"></p>
+
 # RingFaith
 
 **In GNN fraud detection, does the explanation point at the ring the model supposedly found?**
@@ -7,6 +9,22 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23003670.svg)](https://doi.org/10.5281/zenodo.23003670)
 
 ---
+
+<details>
+<summary>Contents</summary>
+
+- [Abstract](#abstract)
+- [1. Findings](#1-findings)
+- [2. Results](#2-results)
+- [3. What this is, and what it is not](#3-what-this-is-and-what-it-is-not)
+- [4. Method](#4-method)
+- [5. Limitations](#5-limitations)
+- [6. Reproducibility](#6-reproducibility)
+- [7. Repository layout](#7-repository-layout)
+- [8. References](#8-references)
+- [License](#license)
+
+</details>
 
 ## Abstract
 
