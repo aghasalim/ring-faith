@@ -1,5 +1,3 @@
-<p align="center"><img src="assets/banner.jpg" alt="Line drawing of a sparse graph with one closed ring of nodes highlighted" width="100%"></p>
-
 # RingFaith
 
 **In GNN fraud detection, does the explanation point at the ring the model supposedly found?**
