@@ -16,6 +16,16 @@ _args = [a for a in sys.argv[1:] if not a.startswith("--")]
 OUT = Path(_args[0]) if _args else Path("reports")
 
 
+def signed_rank_p(a: pd.Series, b: pd.Series) -> float:
+    """Paired Wilcoxon p-value with ties decided on purpose.
+
+    The scores are small fractions, so two equal differences can differ in the
+    last bit of a float, and which bit depends on the pandas version. Rounding
+    first makes equal differences tie, so the p-value is the same everywhere.
+    """
+    return wilcoxon((a - b).round(9)).pvalue
+
+
 def md(df: pd.DataFrame) -> str:
     return df.to_markdown(index=False)
 
@@ -49,7 +59,7 @@ def detected_vs_missed(fai_all: pd.DataFrame) -> pd.DataFrame:
         a, b = cell_means(hit), cell_means(miss)
         both = pd.concat([a, b], axis=1, join="inner", keys=["hit", "miss"]).dropna()
         stat = (
-            wilcoxon(both["hit"], both["miss"]).pvalue
+            signed_rank_p(both["hit"], both["miss"])
             if len(both) > 5 and not (both["hit"] - both["miss"] == 0).all()
             else float("nan")
         )
@@ -103,7 +113,7 @@ def budget_head_to_head(fai_all: pd.DataFrame) -> pd.DataFrame:
             if challenger not in paired:
                 continue
             d = paired[challenger] - paired["gnnexplainer"]
-            p = wilcoxon(paired[challenger], paired["gnnexplainer"]).pvalue if d.any() else 1.0
+            p = signed_rank_p(paired[challenger], paired["gnnexplainer"]) if d.any() else 1.0
             rows.append(
                 {
                     "budget": k_mode,
@@ -204,7 +214,7 @@ def main() -> None:
         {
             "test": f"wilcoxon, grad vs gnnexplainer precision (paired, n={len(paired)})",
             "stat": round(d.mean(), 4),
-            "p": f"{wilcoxon(paired['grad'], paired['gnnexplainer']).pvalue:.2e}",
+            "p": f"{signed_rank_p(paired['grad'], paired['gnnexplainer']):.2e}",
         }
     )
     stat_rows.append(
@@ -219,7 +229,7 @@ def main() -> None:
                 {
                     "test": f"{model} {ex}: beats own random null on % of nodes (n={len(q)})",
                     "stat": round(100 * (q[ex] > q["random"]).mean(), 1),
-                    "p": f"{wilcoxon(q[ex], q['random']).pvalue:.2e}",
+                    "p": f"{signed_rank_p(q[ex], q['random']):.2e}",
                 }
             )
     for topo in sorted(h.topology.unique()):

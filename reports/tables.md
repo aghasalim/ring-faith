@@ -63,14 +63,14 @@
 | pearson r, node AUC vs GNNExpl precision (n=16 cells)                  | 0.769              | 4.94e-04  |
 | pearson r, node AUC vs lift over null (n=16 cells)                     | -0.226             | 4.00e-01  |
 | pearson r, random null vs GNNExpl precision (n=16 cells)               | 0.945              | 3.35e-08  |
-| wilcoxon, grad vs gnnexplainer precision (paired, n=3989)              | 0.0462             | 1.81e-27  |
+| wilcoxon, grad vs gnnexplainer precision (paired, n=3989)              | 0.0462             | 7.18e-28  |
 | grad wins / ties / loses vs gnnexplainer (%)                           | 42.6 / 24.0 / 33.4 | -         |
-| gcn gnnexplainer: beats own random null on % of nodes (n=2000)         | 54.6               | 2.15e-66  |
-| gcn grad: beats own random null on % of nodes (n=2000)                 | 60.9               | 1.90e-101 |
-| gcn ig: beats own random null on % of nodes (n=2000)                   | 69.0               | 6.68e-147 |
-| sage gnnexplainer: beats own random null on % of nodes (n=1989)        | 60.6               | 8.27e-84  |
-| sage grad: beats own random null on % of nodes (n=1989)                | 71.1               | 4.51e-162 |
-| sage ig: beats own random null on % of nodes (n=1989)                  | 71.1               | 4.51e-162 |
+| gcn gnnexplainer: beats own random null on % of nodes (n=2000)         | 54.6               | 1.33e-66  |
+| gcn grad: beats own random null on % of nodes (n=2000)                 | 60.9               | 6.50e-102 |
+| gcn ig: beats own random null on % of nodes (n=2000)                   | 69.0               | 7.48e-148 |
+| sage gnnexplainer: beats own random null on % of nodes (n=1989)        | 60.6               | 8.96e-84  |
+| sage grad: beats own random null on % of nodes (n=1989)                | 71.1               | 3.87e-163 |
+| sage ig: beats own random null on % of nodes (n=1989)                  | 71.1               | 3.87e-163 |
 | bipartite: spearman(camouflage, node AUC) / spearman(camouflage, lift) | -1.0 / +1.0        | -         |
 | clique: spearman(camouflage, node AUC) / spearman(camouflage, lift)    | -1.0 / +0.4        | -         |
 | cycle: spearman(camouflage, node AUC) / spearman(camouflage, lift)     | -1.0 / +0.2        | -         |
@@ -112,14 +112,14 @@
 | budget   | comparison           |   challenger lift |   gnnexpl lift |   mean precision margin | wins / ties / losses (%)   |   wilcoxon p |    n |
 |:---------|:---------------------|------------------:|---------------:|------------------------:|:---------------------------|-------------:|-----:|
 | k1       | grad vs gnnexplainer |             3.002 |          1.92  |                  0.0719 | 26.4 / 54.3 / 19.3         |     1.79e-11 | 3989 |
-| k3       | grad vs gnnexplainer |             2.896 |          2.058 |                  0.0592 | 40.5 / 31.7 / 27.9         |     1.77e-09 | 3989 |
-| k5       | grad vs gnnexplainer |             2.718 |          2.182 |                  0.029  | 40.6 / 27.2 / 32.2         |     2.44e-10 | 3989 |
-| k10      | grad vs gnnexplainer |             2.313 |          2.156 |                 -0.0019 | 34.5 / 29.3 / 36.2         |     0.718    | 3989 |
-| k20      | grad vs gnnexplainer |             1.865 |          1.831 |                 -0.0044 | 31.4 / 37.8 / 30.8         |     0.0207   | 3989 |
-| oracle   | grad vs gnnexplainer |             2.423 |          1.784 |                  0.0462 | 42.6 / 24.0 / 33.4         |     1.81e-27 | 3989 |
+| k3       | grad vs gnnexplainer |             2.896 |          2.058 |                  0.0592 | 40.5 / 31.7 / 27.9         |     8.35e-23 | 3989 |
+| k5       | grad vs gnnexplainer |             2.718 |          2.182 |                  0.029  | 40.6 / 27.2 / 32.2         |     5.58e-10 | 3989 |
+| k10      | grad vs gnnexplainer |             2.313 |          2.156 |                 -0.0019 | 34.5 / 29.3 / 36.2         |     0.283    | 3989 |
+| k20      | grad vs gnnexplainer |             1.865 |          1.831 |                 -0.0044 | 31.4 / 37.8 / 30.8         |     0.0434   | 3989 |
+| oracle   | grad vs gnnexplainer |             2.423 |          1.784 |                  0.0462 | 42.6 / 24.0 / 33.4         |     7.18e-28 | 3989 |
 | k1       | ig vs gnnexplainer   |             3.242 |          1.92  |                  0.1176 | 28.2 / 55.3 / 16.5         |     1.16e-28 | 3989 |
-| k3       | ig vs gnnexplainer   |             3.258 |          2.058 |                  0.1113 | 44.6 / 32.8 / 22.5         |     4.46e-47 | 3989 |
-| k5       | ig vs gnnexplainer   |             3.075 |          2.182 |                  0.0772 | 46.2 / 27.7 / 26.1         |     5.43e-66 | 3989 |
-| k10      | ig vs gnnexplainer   |             2.548 |          2.156 |                  0.0277 | 39.9 / 29.9 / 30.2         |     3.78e-25 | 3989 |
-| k20      | ig vs gnnexplainer   |             1.975 |          1.831 |                  0.0086 | 35.0 / 39.2 / 25.7         |     2.23e-10 | 3989 |
-| oracle   | ig vs gnnexplainer   |             2.604 |          1.784 |                  0.0637 | 47.1 / 24.4 / 28.6         |     7.46e-60 | 3989 |
+| k3       | ig vs gnnexplainer   |             3.258 |          2.058 |                  0.1113 | 44.6 / 32.8 / 22.5         |     2.52e-75 | 3989 |
+| k5       | ig vs gnnexplainer   |             3.075 |          2.182 |                  0.0772 | 46.2 / 27.7 / 26.1         |     3.55e-63 | 3989 |
+| k10      | ig vs gnnexplainer   |             2.548 |          2.156 |                  0.0277 | 39.9 / 29.9 / 30.2         |     1.66e-22 | 3989 |
+| k20      | ig vs gnnexplainer   |             1.975 |          1.831 |                  0.0086 | 35.0 / 39.2 / 25.7         |     2.03e-11 | 3989 |
+| oracle   | ig vs gnnexplainer   |             2.604 |          1.784 |                  0.0637 | 47.1 / 24.4 / 28.6         |     1.53e-60 | 3989 |
